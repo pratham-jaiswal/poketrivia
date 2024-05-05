@@ -8,21 +8,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
-const allowedOrigins = [
-  process.env.ALLOWED_URI
-];
-
-const corsOptions = {
-  origin: (origin, callback) => {
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-};
-
-app.use(cors(corsOptions));
+app.use(cors({
+  origin: 'https://poketrivia-client.vercel.app'
+}));
 
 mongoose
   .connect(`${process.env.MONGODB_URI}/pokemonDB`, { family: 4 })
