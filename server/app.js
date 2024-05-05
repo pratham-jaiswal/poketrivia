@@ -9,7 +9,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
 app.use(cors({
-  origin: rocess.env.ALLOWED_URI
+  origin: process.env.ALLOWED_URI
 }));
 
 
