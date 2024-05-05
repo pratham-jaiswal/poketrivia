@@ -1,6 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const corsMiddleware = require('./cors');
+const cors = require('cors');
 const app = express();
 require("dotenv").config();
 
@@ -8,7 +8,21 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
-app.use(corsMiddleware);
+const allowedOrigins = [
+  process.env.ALLOWED_URI
+];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+};
+
+app.use(cors(corsOptions));
 
 mongoose
   .connect(`${process.env.MONGODB_URI}/pokemonDB`, { family: 4 })
