@@ -126,7 +126,7 @@ function Home({ isAuthenticated, userData, setUserData, userEmail }) {
                     Play
                   </button>
                 </Link>
-                <Link className="btn-container" to="/pokemart">
+                <Link className="btn-container" to="/pokemart" disabled={!isAuthenticated}>
                   <button className="home-btn">
                     PokéMart
                   </button>
