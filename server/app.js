@@ -9,9 +9,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
 app.use(cors({
-  origin: process.env.ALLOWED_URI
+  origin: `${process.env.ALLOWED_URI}`
 }));
-
 
 mongoose
   .connect(`${process.env.MONGODB_URI}/pokemonDB`, { family: 4 })
