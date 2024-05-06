@@ -11,7 +11,7 @@ Test your Pokémon knowledge with engaging quizzes and trivia challenges. Collec
 - Buy and hatch egg(s) to recieve random Pokémon(s)
 - A Pokédex to view Pokémons stats
 
-> \*Data has been collected from PokéAPI and stored in a DB as PokéAPI mentions *but we still encourage you to limit the frequency of requests to limit our hosting costs*.
+> \*Data has been collected from PokéAPI and stored in a DB as PokéAPI mentions *"but we still encourage you to limit the frequency of requests to limit our hosting costs"*.
 
 ## Demo
 | ![Imgur](https://i.imgur.com/ejrgW7g.png) |
@@ -40,7 +40,7 @@ Test your Pokémon knowledge with engaging quizzes and trivia challenges. Collec
 <br/><br/>
 
 ## To-Do
-- Responsive
+- Improve responsiveness for mobile devices
 - Who's That Pokémon?
 - Scramble Surge - Scramble Pokémon names
 - Speedy Showdown - A Rapid Fire PokéQuiz (120s)
