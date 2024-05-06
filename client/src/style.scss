@@ -12,7 +12,7 @@
   font-style: normal;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=VT323&display=swap");
 
 * {
   font-family: "VT323", monospace;
@@ -27,6 +27,20 @@ body {
   padding: 0;
   background-color: rgb(25, 25, 25);
   color: white;
+  overflow-x: hidden;
+  padding-bottom: 300px;
+}
+
+::-webkit-scrollbar {
+  width: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d0272780;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #d02727;
 }
 
 .navbar-container {
@@ -40,10 +54,14 @@ body {
 
 .navbar-row {
   width: 90%;
-  height: 10vh;
+  height: 100%;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+}
+
+.logo-container {
+  width: 100%;
 }
 
 .logo {
@@ -51,7 +69,7 @@ body {
 }
 
 .navbar-links {
-  width: 30%;
+  min-width: 50%;
   display: flex;
   justify-content: end;
   align-items: center;
@@ -84,6 +102,8 @@ img {
 
 .nav-btn {
   text-decoration: none;
+  display: flex;
+  font-display: row;
 }
 
 .auth-btn:hover,
@@ -91,7 +111,7 @@ img {
   color: white;
 
   span {
-    display: inline-block;
+    display: inline;
   }
 }
 
@@ -103,7 +123,6 @@ img {
   justify-content: center;
 
   .professors {
-    width: 90%;
     height: 90%;
     margin: 5vh 0;
     display: flex;
@@ -127,7 +146,7 @@ img {
       height: 99%;
     }
 
-    .joy{
+    .joy {
       height: 100%;
       transform: scaleX(-1);
     }
@@ -231,7 +250,8 @@ img {
   width: 100%;
 }
 
-.home-btn, .mode-btn {
+.home-btn,
+.mode-btn {
   background-color: #d02727;
   color: white;
   border: none;
@@ -250,18 +270,22 @@ img {
   width: 100%;
 }
 
-.home-btn:hover, .active-btn, .mythical-egg.active-btn, .legendary-egg.active-btn{
+.home-btn:hover,
+.active-btn,
+.mythical-egg.active-btn,
+.legendary-egg.active-btn {
   background-color: #ffcb05;
   color: #0b4d8a;
   border: 5px solid #0b4d8a;
   box-shadow: inset 0 0 7px #0b4d8a;
 }
 
-.mode-btn:hover, .trivia-option:hover{
+.mode-btn:hover,
+.trivia-option:hover {
   box-shadow: 1px 1px 2px white;
 }
 
-.disabled-mode.active-btn{
+.disabled-mode.active-btn {
   background-color: gray;
   color: white;
   border: none;
@@ -451,11 +475,13 @@ img {
   }
 }
 
-.legendary, .legendary-egg {
+.legendary,
+.legendary-egg {
   background-color: #65a67e;
 }
 
-.mythical, .mythical-egg {
+.mythical,
+.mythical-egg {
   background-color: #800080;
 }
 
@@ -478,6 +504,262 @@ img {
           color: gray;
         }
       }
+    }
+  }
+}
+
+@media screen and (max-width: 1150px) {
+  .center-container {
+    width: 80vw;
+    margin: 0 10vw;
+
+    .professors {
+      align-items: start;
+      .oak {
+        height: calc(100% * 0.75);
+      }
+
+      .juniper {
+        height: calc(97% * 0.75);
+      }
+
+      .mom {
+        height: calc(104% * 0.75);
+      }
+
+      .kukui {
+        height: calc(99% * 0.75);
+      }
+
+      .joy {
+        height: calc(100% * 0.75);
+        transform: scaleX(-1);
+      }
+    }
+  }
+
+  .pokedex-container {
+    .card-container {
+      width: 80%;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 50px;
+      margin-top: 2%;
+    }
+  }
+}
+@media screen and (max-width: 850px) {
+  .pokedex-container {
+    .card-container {
+      width: 80%;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 50px;
+      margin-top: 2%;
+    }
+  }
+}
+
+@media screen and (max-width: 800px) {
+  .center-container {
+    .professors {
+      .oak {
+        height: calc(100% * 0.5);
+      }
+
+      .juniper {
+        height: calc(97% * 0.5);
+      }
+
+      .mom {
+        height: calc(104% * 0.5);
+      }
+
+      .kukui {
+        height: calc(99% * 0.5);
+      }
+
+      .joy {
+        height: calc(100% * 0.5);
+        transform: scaleX(-1);
+      }
+    }
+  }
+}
+
+@media screen and (max-width: 750px) {
+  .navbar-container {
+    height: calc(10vh + 50px);
+  }
+
+  .navbar-row {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .logo-container {
+    width: 30%;
+  }
+
+  .logo {
+    width: 100%;
+  }
+
+  .navbar-links {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .center-container {
+    .professors {
+      height: 100%;
+
+      .home-container {
+        width: 60%;
+      }
+    }
+  }
+}
+
+@media screen and (max-width: 550px) {
+  .center-container {
+    width: 85vw;
+    margin: 0 7.5vw;
+
+    .auth-btn:hover,
+    .nav-btn:hover {
+      color: white;
+
+      span {
+        display: inline;
+      }
+    }
+
+    .professors {
+      .oak {
+        height: calc(100% * 0.4);
+      }
+
+      .juniper {
+        height: calc(97% * 0.4);
+      }
+
+      .mom {
+        height: calc(104% * 0.4);
+      }
+
+      .kukui {
+        height: calc(99% * 0.4);
+      }
+
+      .joy {
+        height: calc(100% * 0.4);
+        transform: scaleX(-1);
+      }
+
+      .home-container {
+        width: 40%;
+
+        .home-text-container {
+          h1 {
+            font-size: 20px;
+          }
+
+          p {
+            font-size: 18px;
+          }
+
+          .dialogue {
+            height: 5vh;
+          }
+
+          .name-input-container {
+            input {
+              font-size: 18px;
+              padding: 5px 5px;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .home-btn,
+  .mode-btn {
+    font-size: 18px;
+  }
+
+  .pokedex-container {  
+    .card-container {
+      width: 50%;
+      display: grid;
+      grid-template-columns: repeat(1, 1fr);
+      gap: 50px;
+      margin-top: 2%;
+    }
+  }
+}
+
+@media screen and (max-width: 450px) {
+  .logo-container {
+    width: 50%;
+  }
+
+  .center-container {
+    width: 90vw;
+    .professors {
+      gap: 10px;
+
+      .oak {
+        height: calc(100% * 0.3);
+      }
+
+      .juniper {
+        height: calc(97% * 0.3);
+      }
+
+      .mom {
+        height: calc(104% * 0.3);
+      }
+
+      .kukui {
+        height: calc(99% * 0.3);
+      }
+
+      .joy {
+        height: calc(100% * 0.3);
+        transform: scaleX(-1);
+      }
+
+      .home-container {
+        width: 60%;
+      }
+    }
+  }
+}
+
+@media screen and (max-width: 370px) {
+  .navbar-container {
+    height: calc(10vh + 75px);
+  }
+
+  .navbar-links {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .auth-btn:hover,
+  .nav-btn:hover {
+    span {
+      display: none;
+    }
+  }
+
+  .pokedex-container {  
+    .card-container {
+      width: 80%;
     }
   }
 }
