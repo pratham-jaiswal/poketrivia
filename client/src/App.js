@@ -13,6 +13,7 @@ import Pokedex from "./Components/pokedex";
 import PlayModes from "./Components/playModes";
 import PokeMart from "./Components/pokemart";
 import PokeQuiz from "./Components/Trivia/pokeQuiz";
+import WhosThatPokemon from "./Components/Trivia/whosThatPokemon";
 
 function App() {
   const { user, isAuthenticated, isLoading } = useAuth0();
@@ -74,6 +75,12 @@ function App() {
                   path="/play-modes/poke-quiz"
                   element={
                     <PokeQuiz userData={userData} setUserData={setUserData} />
+                  }
+                />                
+                <Route
+                  path="/play-modes/whos-that-pokemon"
+                  element={
+                    <WhosThatPokemon userData={userData} setUserData={setUserData} />
                   }
                 />
                 {/* <Route path="/profile" element={"profile"} /> */}

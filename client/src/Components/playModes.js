@@ -43,7 +43,7 @@ function PlayModes({ userData, setUserData }) {
     "speedy-showdown":
       "(Coming Soon) Get ready for a rapid-fire challenge where you answer as many questions as you can in just 120 seconds!",
     "whos-that-pokemon":
-      "(Coming Soon) Try to identify the hidden Pokémon from its silhouette in this classic guessing game!",
+      "Try to identify the hidden Pokémon from its silhouette in this classic guessing game!",
     "scramble-surge":
       "(Coming Soon) Unscramble the names of 5 Pokémon before time runs out in this word scramble challenge!",
     "type-matchup":
@@ -78,12 +78,7 @@ function PlayModes({ userData, setUserData }) {
   return (
     <div className="center-container">
       <div className="professors">
-        <img
-          draggable="false"
-          className="mom"
-          src={delia}
-          alt="Delia - Mom"
-        />
+        <img draggable="false" className="mom" src={delia} alt="Delia - Mom" />
         {userData.visitedPlayModes ? (
           <>
             <div className="home-container">
@@ -102,6 +97,21 @@ function PlayModes({ userData, setUserData }) {
                   PokéQuiz
                 </button>
                 <button
+                  className={`mode-btn ${
+                    activeMode === "whos-that-pokemon" ? "active-btn" : ""
+                  }`}
+                  onClick={() => {
+                    setActiveMode(
+                      activeMode === "whos-that-pokemon"
+                        ? ""
+                        : "whos-that-pokemon"
+                    );
+                    setDisabledMode(false);
+                  }}
+                >
+                  Who's That Pokémon?
+                </button>
+                <button
                   className={`mode-btn disabled-mode ${
                     activeMode === "speedy-showdown" ? "active-btn" : ""
                   }`}
@@ -113,21 +123,6 @@ function PlayModes({ userData, setUserData }) {
                   }}
                 >
                   Speedy Showdown (Coming Soon)
-                </button>
-                <button
-                  className={`mode-btn disabled-mode ${
-                    activeMode === "whos-that-pokemon" ? "active-btn" : ""
-                  }`}
-                  onClick={() => {
-                    setActiveMode(
-                      activeMode === "whos-that-pokemon"
-                        ? ""
-                        : "whos-that-pokemon"
-                    );
-                    setDisabledMode(true);
-                  }}
-                >
-                  Who's That Pokémon? (Coming Soon)
                 </button>
                 <button
                   className={`mode-btn disabled-mode ${
