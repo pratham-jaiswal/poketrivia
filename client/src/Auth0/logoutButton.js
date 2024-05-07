@@ -5,12 +5,12 @@ const LogoutButton = () => {
 
   return (
     <button
-      className="auth-btn"
+      className="nav-btn"
       onClick={() =>
         logout({ logoutParams: { returnTo: window.location.origin } })
       }
     >
-      <span>Log Out</span> <i className="fa-solid fa-right-from-bracket" />
+      <span>Logout&nbsp;</span><i className="fa-solid fa-right-from-bracket" />
     </button>
   );
 };

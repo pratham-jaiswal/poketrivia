@@ -31,10 +31,10 @@ function Navbar({ isAuthenticated, userData }) {
                   {userData.pokecoins}₱
                 </div>
                 <Link className="nav-btn" to="/pokemart">
-                  <span>PokéMart</span> <i className="fa-solid fa-cart-shopping" />
+                  <span>PokéMart&nbsp;</span><i className="fa-solid fa-cart-shopping" />
                 </Link>
                 <div title="Coming Soon" className="nav-btn">
-                  <span>Leaderboards*</span> <i className="fa-solid fa-ranking-star" />
+                  <span>Leaderboards*&nbsp;</span> <i className="fa-solid fa-ranking-star" />
                 </div>
                 <LogoutButton />
               </>
