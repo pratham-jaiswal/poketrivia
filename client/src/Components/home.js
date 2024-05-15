@@ -98,111 +98,162 @@ function Home({ isAuthenticated, userData, setUserData, userEmail }) {
   };
 
   return (
-    <div className="center-container">
-      <div className="professors">
-        <img
-          draggable="false"
-          className="juniper"
-          src={juniper}
-          alt="Professor Juniper"
-        />
-        {!isAuthenticated || (isAuthenticated && userData) ? (
-          <>
-            <div className="home-container">
-              <div className="home-text-container">
-                <h1>Welcome to PokéTrivia!</h1>
-                <p>Test your Pokémon knowledge and win PokéCoins!</p>
-                <p>
-                  Use your PokéCoins to collect Pokémon card packs and expand
-                  your collection.
-                </p>
-                <p>
-                  Trade cards with other players to complete your collection!
-                </p>
+    <>
+      <div className="center-container">
+        <div className="professors">
+          <img
+            draggable="false"
+            className="juniper"
+            src={juniper}
+            alt="Professor Juniper"
+          />
+          {!isAuthenticated || (isAuthenticated && userData) ? (
+            <>
+              <div className="home-container">
+                <div className="home-text-container">
+                  <h1>Welcome to PokéTrivia!</h1>
+                  <p>Test your Pokémon knowledge and win PokéCoins!</p>
+                  <p>
+                    Use your PokéCoins to collect Pokémon card packs and expand
+                    your collection.
+                  </p>
+                  <p>
+                    Trade cards with other players to complete your collection!
+                  </p>
+                </div>
+                <div className="home-btn-container">
+                  <Link className="btn-container" to="/play-modes">
+                    <button className="home-btn" disabled={!isAuthenticated}>
+                      Play
+                    </button>
+                  </Link>
+                  <Link className="btn-container" to="/pokemart">
+                    <button className="home-btn" disabled={!isAuthenticated}>
+                      PokéMart
+                    </button>
+                  </Link>
+                  <Link className="btn-container" to="/">
+                    <button className="home-btn" disabled>
+                      Trade (Coming Soon)
+                    </button>
+                  </Link>
+                  <Link className="btn-container" to="/pokedex">
+                    <button className="home-btn" disabled={!isAuthenticated}>
+                      Pokédex
+                    </button>
+                  </Link>
+                </div>
               </div>
-              <div className="home-btn-container">
-                <Link className="btn-container" to="/play-modes">
-                  <button className="home-btn" disabled={!isAuthenticated}>
-                    Play
-                  </button>
-                </Link>
-                <Link className="btn-container" to="/pokemart">
-                  <button className="home-btn" disabled={!isAuthenticated}>
-                    PokéMart
-                  </button>
-                </Link>
-                <Link className="btn-container" to="/">
-                  <button className="home-btn" disabled>
-                    Trade (Coming Soon)
-                  </button>
-                </Link>
-                <Link className="btn-container" to="/pokedex">
-                  <button className="home-btn" disabled={!isAuthenticated}>
-                    Pokédex
-                  </button>
-                </Link>
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="home-container">
-              <div className="home-text-container">
-                <p className="dialogue">
-                  <span className={dialogues[currentDialogueIndex].speaker}>
-                    {currentDialogueIndex + 1 >= 4
-                      ? dialogues[currentDialogueIndex].speaker.toUpperCase()
-                      : "???"}
-                    :{" "}
-                  </span>
-                  {dialogues[currentDialogueIndex].dialogue}
-                </p>
-                {currentDialogueIndex + 1 === 10 && (
-                  <div className="name-input-container">
-                    <input
-                      type="text"
-                      value={username}
-                      onChange={handleNameChange}
-                      placeholder="Red"
-                    />
+            </>
+          ) : (
+            <>
+              <div className="home-container">
+                <div className="home-text-container">
+                  <p className="dialogue">
+                    <span className={dialogues[currentDialogueIndex].speaker}>
+                      {currentDialogueIndex + 1 >= 4
+                        ? dialogues[currentDialogueIndex].speaker.toUpperCase()
+                        : "???"}
+                      :{" "}
+                    </span>
+                    {dialogues[currentDialogueIndex].dialogue}
+                  </p>
+                  {currentDialogueIndex + 1 === 10 && (
+                    <div className="name-input-container">
+                      <input
+                        type="text"
+                        value={username}
+                        onChange={handleNameChange}
+                        placeholder="Red"
+                      />
 
-                    {errorMessage && (
-                      <p className="dialogue">
-                        <span className="oak">OAK: </span>
-                        {errorMessage}
-                      </p>
-                    )}
-                  </div>
+                      {errorMessage && (
+                        <p className="dialogue">
+                          <span className="oak">OAK: </span>
+                          {errorMessage}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {currentDialogueIndex < dialogues.length - 1 ? (
+                  <button
+                    className="home-btn next-sm"
+                    onClick={
+                      currentDialogueIndex + 1 === 10
+                        ? handleNameConfirmation
+                        : handleNextDialogue
+                    }
+                    disabled={
+                      currentDialogueIndex + 1 === 10
+                        ? isConfirmDisabled
+                        : false
+                    }
+                  >
+                    Next
+                  </button>
+                ) : (
+                  <button
+                    className="home-btn"
+                    onClick={() => window.location.reload()}
+                  >
+                    Wake Up!
+                  </button>
                 )}
               </div>
-              {currentDialogueIndex < dialogues.length - 1 ? (
-                <button
-                  className="home-btn next-sm"
-                  onClick={
-                    currentDialogueIndex + 1 === 10
-                      ? handleNameConfirmation
-                      : handleNextDialogue
-                  }
-                  disabled={
-                    currentDialogueIndex + 1 === 10 ? isConfirmDisabled : false
-                  }
-                >
-                  Next
-                </button>
-              ) : (
-                <button
-                  className="home-btn"
-                  onClick={() => window.location.reload()}
-                >
-                  Wake Up!
-                </button>
-              )}
-            </div>
-          </>
-        )}
-        <img draggable="false" className="oak" src={oak} alt="Professor Oak" />
+            </>
+          )}
+          <img
+            draggable="false"
+            className="oak"
+            src={oak}
+            alt="Professor Oak"
+          />
+        </div>
       </div>
-    </div>
+      <div className="center-container-2">
+        <div className="home-text-container">
+          <h1>Disclaimer</h1>
+          <p>
+            This web application is a fan-made project created for educational
+            and entertainment purposes. It is not affiliated with, endorsed,
+            sponsored, or specifically approved by Nintendo or any of its
+            affiliates.
+          </p>
+          <p>
+            All Pokémon characters, names, and related indicia are trademarks of
+            Nintendo, Game Freak, and Creatures. This project does not intend to
+            infringe upon these trademarks and is not made for profit.
+          </p>
+          <p>
+            We hope you enjoy using this application as much as we enjoyed
+            creating it. If you have any questions or concerns, please feel free
+            to reach out to us.
+          </p>
+        </div>
+      </div>
+      <div className="center-container-2">
+        <div className="home-text-container">
+          <Link
+            to="https://github.com/pratham-jaiswal/poketrivia"
+            target="_blank"
+          >
+            <i className="fa-brands fa-github"></i>
+          </Link>
+          <Link
+            to="https://www.instagram.com/_pratham.dev"
+            target="_blank"
+          >
+            <i className="fa-brands fa-instagram"></i>
+          </Link>
+          <Link
+            to="mailto:prathamj0502@gmail.com"
+          >
+            <i className="fa-solid fa-envelope"></i>
+          </Link>
+        </div>
+      </div>
+    </>
   );
 }
 
