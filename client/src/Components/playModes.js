@@ -45,7 +45,7 @@ function PlayModes({ userData, setUserData }) {
     "whos-that-pokemon":
       "Try to identify the hidden Pokémon from its silhouette in this classic guessing game!",
     "scramble-surge":
-      "(Coming Soon) Unscramble the names of 5 Pokémon before time runs out in this word scramble challenge!",
+      "Unscramble the names of 5 Pokémon before time runs out in this word scramble challenge!",
     "type-matchup":
       "(Coming Soon) Match Pokémon with their corresponding types in this exciting test of knowledge and strategy!",
   };
@@ -112,6 +112,19 @@ function PlayModes({ userData, setUserData }) {
                   Who's That Pokémon?
                 </button>
                 <button
+                  className={`mode-btn ${
+                    activeMode === "scramble-surge" ? "active-btn" : ""
+                  }`}
+                  onClick={() => {
+                    setActiveMode(
+                      activeMode === "scramble-surge" ? "" : "scramble-surge"
+                    );
+                    setDisabledMode(false);
+                  }}
+                >
+                  Scramble Surge
+                </button>
+                <button
                   className={`mode-btn disabled-mode ${
                     activeMode === "speedy-showdown" ? "active-btn" : ""
                   }`}
@@ -123,19 +136,6 @@ function PlayModes({ userData, setUserData }) {
                   }}
                 >
                   Speedy Showdown (Coming Soon)
-                </button>
-                <button
-                  className={`mode-btn disabled-mode ${
-                    activeMode === "scramble-surge" ? "active-btn" : ""
-                  }`}
-                  onClick={() => {
-                    setActiveMode(
-                      activeMode === "scramble-surge" ? "" : "scramble-surge"
-                    );
-                    setDisabledMode(true);
-                  }}
-                >
-                  Scramble Surge (Coming Soon)
                 </button>
                 <button
                   className={`mode-btn disabled-mode ${

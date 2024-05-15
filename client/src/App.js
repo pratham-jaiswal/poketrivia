@@ -14,6 +14,7 @@ import PlayModes from "./Components/playModes";
 import PokeMart from "./Components/pokemart";
 import PokeQuiz from "./Components/Trivia/pokeQuiz";
 import WhosThatPokemon from "./Components/Trivia/whosThatPokemon";
+import ScrambleSurge from "./Components/Trivia/scrambleSurge";
 
 function App() {
   const { user, isAuthenticated, isLoading } = useAuth0();
@@ -76,11 +77,17 @@ function App() {
                   element={
                     <PokeQuiz userData={userData} setUserData={setUserData} />
                   }
-                />                
+                />
                 <Route
                   path="/play-modes/whos-that-pokemon"
                   element={
                     <WhosThatPokemon userData={userData} setUserData={setUserData} />
+                  }
+                />
+                <Route
+                  path="/play-modes/scramble-surge"
+                  element={
+                    <ScrambleSurge userData={userData} setUserData={setUserData} />
                   }
                 />
                 {/* <Route path="/profile" element={"profile"} /> */}

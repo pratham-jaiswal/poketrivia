@@ -7,7 +7,8 @@ Test your Pokémon knowledge with engaging quizzes and trivia challenges. Collec
 - Data collected from [PokéAPI](https://pokeapi.co/)*
 - 1k+ Pokémons to collect
 - PokéQuiz with 20 random questions evrytime
-- Who's that Pokémon with 10 random pokemon silhouette everytime
+- Who's that Pokémon with 10 random pokémon silhouette everytime
+- Scramble Surge with 10 random scrambled pokémon names
 - Earn PokéCoins (₱)
 - Buy and hatch egg(s) to recieve random Pokémon(s)
 - A Pokédex to view Pokémons stats
@@ -42,7 +43,6 @@ Test your Pokémon knowledge with engaging quizzes and trivia challenges. Collec
 
 ## To-Do
 - Improve responsiveness for mobile devices
-- Scramble Surge - Scramble Pokémon names
 - Speedy Showdown - A Rapid Fire PokéQuiz (120s)
 - Type Matchup - Match Pokémon to their respective types
 
@@ -50,9 +50,6 @@ Test your Pokémon knowledge with engaging quizzes and trivia challenges. Collec
 - PokéMart to have a possibility of giving already owned Pokémons
 - Trading extra Pokémons with other players
 - Leaderboards
-
-## To-Fix
-- Stop PokéMart from giving out legendary/mythical in normal hatch(es)
 
 ## Built With
 - React.js
