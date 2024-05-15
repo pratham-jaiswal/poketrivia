@@ -118,7 +118,8 @@ img {
   width: 70vw;
   margin: 0 15vw;
   display: flex;
-  justify-content: center;
+  align-items: center;
+  flex-direction: column;
 
   .professors {
     height: 90%;
@@ -154,9 +155,9 @@ img {
       height: 95%;
     }
 
-    .pkmn-holder{
+    .pkmn-holder {
       height: 100%;
-      .wtp-pokemon{
+      .wtp-pokemon {
         height: 100%;
         filter: brightness(0) invert(1);
       }
@@ -212,7 +213,7 @@ img {
       }
 
       .dawn {
-        color: #D998A2;
+        color: #d998a2;
       }
 
       .name-input-container {
@@ -232,8 +233,62 @@ img {
     }
   }
 
-  .professors.wtp-container{
+  .bottom {
+    margin: 100px 0;
+
+    .home-container {
+      .home-text-container {
+        h1 {
+          font-size: 30;
+        }
+
+        p {
+          font-size: 25;
+        }
+      }
+    }
+  }
+
+  .professors.wtp-container {
     width: 70%;
+  }
+}
+
+.center-container-2 {
+  width: 60vw;
+  margin: 100px 20vw 0;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  text-align: center;
+
+  .home-text-container {
+    width: 100%;
+
+    h1 {
+      font-size: 30px;
+      font-weight: normal;
+    }
+
+    p {
+      font-size: 22px;
+    }
+
+    i {
+      background-color: #d02727;
+      font-size: 30px;
+      color: rgb(25, 25, 25);
+      transition: color 0.5s ease, background-color 0.5s ease;
+      cursor: pointer;
+      margin: 50px 20px 0;
+      padding: 10px;
+      border-radius: 25px;
+    }
+
+    i:hover {
+      color: #ffcb05;
+      background-color: #0b4d8a;
+    }
   }
 }
 
@@ -274,6 +329,7 @@ img {
 .mode-btn {
   background-color: #d02727;
   color: white;
+  transition: color 0.3s ease, background-color 0.3s ease;
   border: none;
   padding: 10px 20px;
   font-size: 22px;
@@ -284,6 +340,7 @@ img {
   text-transform: capitalize;
   background-color: #ffcb05;
   color: black;
+  transition: color 0.3s ease, background-color 0.3s ease;
   border: none;
   padding: 10px 20px;
   font-size: 22px;
@@ -298,16 +355,19 @@ img {
   color: #0b4d8a;
   border: 5px solid #0b4d8a;
   box-shadow: inset 0 0 7px #0b4d8a;
+  transition: color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .mode-btn:hover,
 .trivia-option:hover {
   box-shadow: 1px 1px 2px white;
+  transition: color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .disabled-mode.active-btn {
   background-color: gray;
   color: white;
+  transition: color 0.3s ease, background-color 0.3s ease;
   border: none;
   box-shadow: none;
 }
@@ -331,6 +391,7 @@ img {
 .next-sm:disabled {
   background-color: gray;
   color: white;
+  transition: color 0.3s ease, background-color 0.3s ease;
   border: none;
   box-shadow: none;
   cursor: not-allowed;
@@ -339,6 +400,7 @@ img {
 .next:disabled {
   background-color: gray;
   color: white;
+  transition: color 0.3s ease, background-color 0.3s ease;
   border: none;
   box-shadow: none;
   cursor: not-allowed;
@@ -362,12 +424,14 @@ img {
       font-size: 20px;
       background-color: transparent;
       color: white;
+      transition: color 0.3s ease;
       border: none;
     }
 
     .active {
       color: #d02727;
       text-decoration: underline;
+      transition: color 0.3s ease;
     }
   }
 
@@ -375,6 +439,7 @@ img {
     .active {
       color: #ffcb05;
       text-decoration: underline;
+      transition: color 0.3s ease;
     }
   }
 
@@ -398,6 +463,7 @@ img {
   align-items: center;
   background-color: #d02727;
   box-shadow: 0 0 5px white;
+  transition: color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
 
   .id {
     width: 90%;
@@ -500,11 +566,13 @@ img {
 .legendary,
 .legendary-egg {
   background-color: #65a67e;
+  transition: color 0.3s ease, background-color 0.3s ease;
 }
 
 .mythical,
 .mythical-egg {
   background-color: #800080;
+  transition: color 0.3s ease, background-color 0.3s ease;
 }
 
 .card-unknown {
@@ -561,6 +629,10 @@ img {
         height: calc(95% * 0.75);
       }
     }
+  }
+
+  .center-container-2 {
+    margin: 250px 20vw 0;
   }
 }
 
@@ -627,9 +699,13 @@ img {
       }
     }
 
-    .professors.wtp-container{
+    .professors.wtp-container {
       width: 100%;
     }
+  }
+
+  .center-container-2 {
+    margin: 400px 20vw 0;
   }
 }
 
@@ -696,16 +772,16 @@ img {
         }
       }
 
-      .pkmn-holder{
+      .pkmn-holder {
         height: 50%;
-        .wtp-pokemon{
+        .wtp-pokemon {
           height: 100%;
           filter: brightness(0) invert(1);
         }
       }
     }
 
-    .professors.wtp-container{
+    .professors.wtp-container {
       width: 100%;
     }
   }
@@ -713,6 +789,19 @@ img {
   .home-btn,
   .mode-btn {
     font-size: 18px;
+  }
+
+  .center-container-2 {
+    .home-text-container {
+      h1 {
+        font-size: 20px;
+        font-weight: normal;
+      }
+
+      p {
+        font-size: 18px;
+      }
+    }
   }
 }
 
@@ -755,7 +844,7 @@ img {
       }
     }
 
-    .professors.wtp-container{
+    .professors.wtp-container {
       width: 100%;
     }
   }
@@ -778,7 +867,7 @@ img {
     }
   }
 
-  .pokedex-container {  
+  .pokedex-container {
     .card-container {
       width: 80%;
     }
