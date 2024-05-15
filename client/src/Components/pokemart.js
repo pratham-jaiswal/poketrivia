@@ -9,7 +9,7 @@ function PokeMart({ userData, setUserData }) {
   const [errorMessage, setErrorMessage] = useState("");
   const [hatching, setHatching] = useState(false);
   const [pokemons, setPokemons] = useState([]);
-  const [ownedPokemons, setOwnedPokemons] = useState([]);
+  const [ownedNonLegendaryMythicalPokemons, setOwnedNonLegendaryMythicalPokemons] = useState([]);
   const [ownedMythicalPokemons, setOwnedMythicalPokemons] = useState([]);
   const [ownedLegendaryPokemons, setOwnedLegendaryPokemons] = useState([]);
   const [hatchedPokemonList, setHatchedPokemonList] = useState([]);
@@ -64,7 +64,11 @@ function PokeMart({ userData, setUserData }) {
 
   useEffect(() => {
     const owned = pokemons.filter((pokemon) => isPokemonOwned(pokemon._id));
-    setOwnedPokemons(owned);
+
+    const ownedNonLegendaryMythical = owned.filter(
+      (pokemon) => !pokemon.isLegendary && !pokemon.isMythical
+    );
+    setOwnedNonLegendaryMythicalPokemons(ownedNonLegendaryMythical);
 
     const ownedLegendary = owned.filter((pokemon) => pokemon.isLegendary);
     setOwnedLegendaryPokemons(ownedLegendary);
@@ -86,7 +90,10 @@ function PokeMart({ userData, setUserData }) {
       case "one-egg":
       case "five-eggs":
       case "ten-eggs":
-        notOwnedPokemons = filterOwnedPokemons(pokemons, ownedPokemons);
+        notOwnedPokemons = filterOwnedPokemons(
+          pokemons,
+          ownedNonLegendaryMythicalPokemons
+        );
         break;
       case "one-legendary-egg":
         notOwnedPokemons = filterOwnedPokemons(
@@ -293,7 +300,13 @@ function PokeMart({ userData, setUserData }) {
                   {hatchedPokemonList.map((pokemon) => (
                     <button
                       key={pokemon._id}
-                      className={`mode-btn capitalize ${activeMode === "one-legendary-egg" ? "legendary-egg" : activeMode === "one-mythical-egg" ? "mythical-egg" : ""}`}
+                      className={`mode-btn capitalize ${
+                        activeMode === "one-legendary-egg"
+                          ? "legendary-egg"
+                          : activeMode === "one-mythical-egg"
+                          ? "mythical-egg"
+                          : ""
+                      }`}
                       onClick={() => {
                         setActiveMode(
                           activeMode === "one-egg" ? "" : "one-egg"
