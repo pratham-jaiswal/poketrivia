@@ -124,7 +124,7 @@ function PlayModes({ userData, setUserData }) {
                 >
                   Scramble Surge
                 </button>
-                <button
+                {/* <button
                   className={`mode-btn disabled-mode ${
                     activeMode === "speedy-showdown" ? "active-btn" : ""
                   }`}
@@ -149,7 +149,7 @@ function PlayModes({ userData, setUserData }) {
                   }}
                 >
                   Type Matchup (Coming Soon)
-                </button>
+                </button> */}
               </div>
               {activeMode && (
                 <>

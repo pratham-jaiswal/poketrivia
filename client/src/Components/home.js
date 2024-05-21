@@ -132,11 +132,11 @@ function Home({ isAuthenticated, userData, setUserData, userEmail }) {
                       PokéMart
                     </button>
                   </Link>
-                  <Link className="btn-container" to="/">
+                  {/* <Link className="btn-container" to="/">
                     <button className="home-btn" disabled>
                       Trade (Coming Soon)
                     </button>
-                  </Link>
+                  </Link> */}
                   <Link className="btn-container" to="/pokedex">
                     <button className="home-btn" disabled={!isAuthenticated}>
                       Pokédex

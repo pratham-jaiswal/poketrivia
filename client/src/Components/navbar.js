@@ -33,9 +33,9 @@ function Navbar({ isAuthenticated, userData }) {
                 <Link className="nav-btn" to="/pokemart">
                   <span>PokéMart&nbsp;</span><i className="fa-solid fa-cart-shopping" />
                 </Link>
-                <div title="Coming Soon" className="nav-btn">
-                  <span>Leaderboards*&nbsp;</span> <i className="fa-solid fa-ranking-star" />
-                </div>
+                {/* <div title="Coming Soon" className="nav-btn">
+                  <span>Leaderboards&nbsp;</span> <i className="fa-solid fa-ranking-star" />
+                </div> */}
                 <LogoutButton />
               </>
             )}
