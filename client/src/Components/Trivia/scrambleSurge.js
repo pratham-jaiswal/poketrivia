@@ -1,4 +1,4 @@
-import dawn from "../../Images/Characters/dawn.png";
+import brock from "../../Images/Characters/brock.png";
 import { useEffect, useState } from "react";
 import axios from "axios";
 
@@ -170,14 +170,14 @@ function ScrambleSurge({ userData, setUserData }) {
   return (
     <div className="center-container">
       <div className="professors wtp-container">
-        <img draggable="false" className="dawn" src={dawn} alt="Dawn" />
+        <img draggable="false" className="brock" src={brock} alt="Brock" />
         {pokemonScrambledNameList.length > 0 && (
           <>
             {!quizComplete ? (
               <div className="home-container">
                 <div className="home-text-container">
                   <p>
-                    <span className="dawn">DAWN: </span>Who's that Pokémon?
+                    <span className="brock">BROCK: </span>Who's that Pokémon?
                   </p>
                   <p className="pkmn-holder">
                     {pokemonScrambledNameList[currentQuestionIndex]?.scrambledName}
@@ -300,11 +300,11 @@ function ScrambleSurge({ userData, setUserData }) {
                   <>
                     <div className="home-text-container">
                       <p>
-                        <span className="dawn">DAWN: </span>You've completed the
+                        <span className="brock">BROCK: </span>You've completed the
                         quiz with a score of {score}/10
                       </p>
                       <p>
-                        <span className="dawn">DAWN: </span>
+                        <span className="brock">BROCK: </span>
                         {scoreDialogue.dialogue}
                       </p>
                       {errorMessage && (
