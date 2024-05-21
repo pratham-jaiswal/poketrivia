@@ -2,7 +2,7 @@
 # PokéTrivia
 Test your Pokémon knowledge with engaging quizzes and trivia challenges. Collect over a thousand Pokémons. A fun project for Pokémon enthusiasts and trivia lovers alike!
 
-> <p style="text-align: center;"><i><b>Disclaimer:</b><br>This web application is a fan-made project created for educational and entertainment purposes. It is not affiliated with, endorsed, sponsored, or specifically approved by Nintendo or any of its affiliates All Pokémon characters, names, and related indicia are trademarks of Nintendo, Game Freak, and Creatures. This project does not intend to infringe upon these trademarks and is not made for profit. We hope you enjoy using this application as much as we enjoyed creating it. If you have any questions or concerns, please feel free to reach out to us.</i></p>
+> <p align="center"><i><b>Disclaimer:</b><br>This web application is a fan-made project created for educational and entertainment purposes. It is not affiliated with, endorsed, sponsored, or specifically approved by Nintendo or any of its affiliates All Pokémon characters, names, and related indicia are trademarks of Nintendo, Game Freak, and Creatures. This project does not intend to infringe upon these trademarks and is not made for profit. We hope you enjoy using this application as much as we enjoyed creating it. If you have any questions or concerns, please feel free to reach out to us.</i></p>
 
 ## Features
 - Auth0 for authentication
