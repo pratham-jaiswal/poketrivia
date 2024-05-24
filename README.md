@@ -83,10 +83,10 @@ Test your Pokémon knowledge with engaging quizzes and trivia challenges. Collec
 
 ## To-Do
 - Improve responsiveness for mobile devices
-- Speedy Showdown - A Rapid Fire PokéQuiz (120s)
-- Type Matchup - Match Pokémon to their respective types
 
 ## Just an idea, for now:
+- Speedy Showdown - A Rapid Fire PokéQuiz (120s)
+- Type Matchup - Match Pokémon to their respective types
 - PokéMart to have a possibility of giving already owned Pokémons
 - Trading extra Pokémons with other players
 - Leaderboards
