@@ -97,6 +97,7 @@ Test your Pokémon knowledge with engaging quizzes and trivia challenges. Collec
 - Express.js
 - MongoDB
 - Sass
+- EmailJs
 - PokeAPI (for data)
 
 ## Contributing
