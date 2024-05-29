@@ -1,14 +1,20 @@
 import oak from "../Images/Characters/oak.png";
 import juniper from "../Images/Characters/juniper.png";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
+import emailjs from "@emailjs/browser";
 
 function Home({ isAuthenticated, userData, setUserData, userEmail }) {
   const [currentDialogueIndex, setCurrentDialogueIndex] = useState(0);
   const [username, setUsername] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isConfirmDisabled, setIsConfirmDisabled] = useState(true);
+  const [status, setStatus] = useState({
+    message: "",
+    type: "",
+  });
+  const form = useRef();
 
   const dialogues = [
     { id: 1, dialogue: "Hello, there!", speaker: "both" },
@@ -63,6 +69,50 @@ function Home({ isAuthenticated, userData, setUserData, userEmail }) {
       speaker: "both",
     },
   ];
+
+  const sendEmail = (e) => {
+    e.preventDefault();
+
+    emailjs
+      .sendForm(
+        process.env.REACT_APP_EMAIL_SERVICE_KEY,
+        process.env.REACT_APP_EMAIL_TEMPLATE_ID,
+        form.current,
+        {
+          publicKey: process.env.REACT_APP_EMAIL_PUBLIC_KEY,
+        }
+      )
+      .then(
+        () => {
+          form.current.reset();
+          setStatus({
+            message:
+              "Your message has been successfully sent. We will get back to you as soon as possible.",
+            type: "success",
+          });
+          setTimeout(() => {
+            setStatus({
+              message: "",
+              type: "",
+            });
+          }, 5000);
+        },
+        (error) => {
+          console.log(error.text);
+          setStatus({
+            message:
+              "Oops! Something went wrong while sending your message. Please try again later or use alternative contact options below.",
+            type: "error",
+          });
+          setTimeout(() => {
+            setStatus({
+              message: "",
+              type: "",
+            });
+          }, 5000);
+        }
+      );
+  };
 
   const handleNextDialogue = () => {
     if (currentDialogueIndex < dialogues.length - 1) {
@@ -232,6 +282,22 @@ function Home({ isAuthenticated, userData, setUserData, userEmail }) {
           </p>
         </div>
       </div>
+      <form className="center-container-2" ref={form} onSubmit={sendEmail}>
+        <div className={`status ${status.type}`}>{status.message}</div>
+        <input type="text" name="user_name" placeholder="Name" required />
+        <input type="email" name="user_email" placeholder="Email" required />
+        <input type="text" name="app_name" value="Pokétrivia" hidden />
+        <textarea
+          placeholder="Message"
+          cols="30"
+          rows="10"
+          name="message"
+          required
+        ></textarea>
+        <button className="home-btn" type="submit">
+          Send
+        </button>
+      </form>
       <div className="center-container-2">
         <div className="home-text-container">
           <Link
@@ -240,15 +306,10 @@ function Home({ isAuthenticated, userData, setUserData, userEmail }) {
           >
             <i className="fa-brands fa-github"></i>
           </Link>
-          <Link
-            to="https://www.instagram.com/_pratham.dev"
-            target="_blank"
-          >
+          <Link to="https://www.instagram.com/_pratham.dev" target="_blank">
             <i className="fa-brands fa-instagram"></i>
           </Link>
-          <Link
-            to="mailto:prathamj0502@gmail.com"
-          >
+          <Link to="mailto:prathamj0502@gmail.com">
             <i className="fa-solid fa-envelope"></i>
           </Link>
         </div>
