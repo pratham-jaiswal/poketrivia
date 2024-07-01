@@ -173,12 +173,12 @@ function Home({ isAuthenticated, userData, setUserData, userEmail }) {
                 </div>
                 <div className="home-btn-container">
                   <Link className="btn-container" to="/play-modes">
-                    <button className="home-btn" disabled={!isAuthenticated}>
+                    <button className="home-btn">
                       Play
                     </button>
                   </Link>
                   <Link className="btn-container" to="/pokemart">
-                    <button className="home-btn" disabled={!isAuthenticated}>
+                    <button className="home-btn">
                       PokéMart
                     </button>
                   </Link>
@@ -188,7 +188,7 @@ function Home({ isAuthenticated, userData, setUserData, userEmail }) {
                     </button>
                   </Link> */}
                   <Link className="btn-container" to="/pokedex">
-                    <button className="home-btn" disabled={!isAuthenticated}>
+                    <button className="home-btn">
                       Pokédex
                     </button>
                   </Link>

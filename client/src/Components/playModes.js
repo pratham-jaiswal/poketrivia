@@ -79,7 +79,7 @@ function PlayModes({ userData, setUserData }) {
     <div className="center-container">
       <div className="professors">
         <img draggable="false" className="mom" src={delia} alt="Delia - Mom" />
-        {userData.visitedPlayModes ? (
+        {(userData && userData.visitedPlayModes) || !userData ? (
           <>
             <div className="home-container">
               <div className="grid-btn-container">

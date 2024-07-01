@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import Card from "./card";
+import { NotAuthenticatedComponent } from "../App";
 
 function Pokedex({ userData }) {
   const [pokemons, setPokemons] = useState([]);
@@ -24,21 +25,25 @@ function Pokedex({ userData }) {
 
   const isPokemonOwned = useCallback(
     (pokemonId) => {
-      return userData.pokemons.some((pokemon) => pokemon.pokemon === pokemonId);
+      return userData
+        ? userData.pokemons.some((pokemon) => pokemon.pokemon === pokemonId)
+        : false;
     },
-    [userData.pokemons]
+    [userData]
   );
 
   useEffect(() => {
-    const owned = pokemons.filter((pokemon) => isPokemonOwned(pokemon._id));
-    setOwnedPokemons(owned);
+    if (userData) {
+      const owned = pokemons.filter((pokemon) => isPokemonOwned(pokemon._id));
+      setOwnedPokemons(owned);
 
-    const ownedLegendary = owned.filter((pokemon) => pokemon.isLegendary);
-    setOwnedLegendaryPokemons(ownedLegendary);
+      const ownedLegendary = owned.filter((pokemon) => pokemon.isLegendary);
+      setOwnedLegendaryPokemons(ownedLegendary);
 
-    const ownedMythical = owned.filter((pokemon) => pokemon.isMythical);
-    setOwnedMythicalPokemons(ownedMythical);
-  }, [pokemons, isPokemonOwned]);
+      const ownedMythical = owned.filter((pokemon) => pokemon.isMythical);
+      setOwnedMythicalPokemons(ownedMythical);
+    }
+  }, [userData, pokemons, isPokemonOwned]);
 
   useEffect(() => {
     if (option === "all") {
@@ -112,6 +117,11 @@ function Pokedex({ userData }) {
           >
             Mythical
           </button>
+        </div>
+      )}
+      {option === "owned" && !userData && (
+        <div style={{ width: "100%" }}>
+          <NotAuthenticatedComponent message="You must be logged in to view your pokemons." />
         </div>
       )}
       <div className="card-container">
