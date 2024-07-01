@@ -167,9 +167,9 @@ function Home({ isAuthenticated, userData, setUserData, userEmail }) {
                     Use your PokéCoins to collect Pokémon card packs and expand
                     your collection.
                   </p>
-                  <p>
+                  {/* <p>
                     Trade cards with other players to complete your collection!
-                  </p>
+                  </p> */}
                 </div>
                 <div className="home-btn-container">
                   <Link className="btn-container" to="/play-modes">
