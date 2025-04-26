@@ -2,9 +2,9 @@
   "name": "poketrivia-server",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "api/index.ts",
   "scripts": {
-    "start": "node app",
+    "start": "node api/index.ts",
     "dev": "nodemon",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

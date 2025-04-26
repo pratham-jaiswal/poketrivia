@@ -57,6 +57,16 @@ function App() {
 
   return (
     <div className="app">
+      <a
+        href="https://www.patreon.com/bePatron?u=109627851"
+        target="_blank"
+        rel="noopener"
+        id="floating-patreon-btn"
+        data-patreon-widget-type="become-patron-button"
+        area-label="Become a Patron on Patreon"
+      >
+        <img width={20} src="https://res.cloudinary.com/dhzmockpa/image/upload/v1745674680/PATREON_SYMBOL_1_BLACK_RGB_trsdty.svg" alt="Become a Patron on Patreon" />
+      </a>
       {isLoaded && (
         <Router>
           <Navbar userData={userData} isAuthenticated={isAuthenticated} />
