@@ -58,14 +58,13 @@ function App() {
   return (
     <div className="app">
       <a
-        href="https://www.patreon.com/bePatron?u=109627851"
+        href="https://www.patreon.com/collection/1819237"
         target="_blank"
         rel="noopener"
         id="floating-patreon-btn"
-        data-patreon-widget-type="become-patron-button"
-        area-label="Become a Patron on Patreon"
+        area-label="Support Me on Patreon"
       >
-        <img width={20} src="https://res.cloudinary.com/dhzmockpa/image/upload/v1745674680/PATREON_SYMBOL_1_BLACK_RGB_trsdty.svg" alt="Become a Patron on Patreon" />
+        <img width={20} src="https://res.cloudinary.com/dhzmockpa/image/upload/v1745674680/PATREON_SYMBOL_1_BLACK_RGB_trsdty.svg" alt="Support Me on Patreon" />
       </a>
       {isLoaded && (
         <Router>
