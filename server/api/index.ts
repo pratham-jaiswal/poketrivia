@@ -1,182 +1,162 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require('cors');
+import express, { type Request, type Response } from "express";
+import mongoose from "mongoose";
+// import cors from "cors";
+import dotenv from "dotenv";
+import type { GameType, Answer, IPokemon, GameQuestion } from "./custom_types.ts";
+import { GameSession, Pokemon, User } from "./models.ts";
+import { generateFactQuiz, generateScrambleQuiz, generateImageQuiz } from "./game_utils.ts";
+
+dotenv.config();
+
 const app = express();
-require("dotenv").config();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
-app.use(cors({
-  origin: `${process.env.ALLOWED_URI}`
-}));
+// app.use(
+//   cors({
+//     origin: `${process.env.ALLOWED_URI}`,
+//   }),
+// );
 
-mongoose
-  .connect(`${process.env.MONGODB_URI}/pokemonDB`, { family: 4 })
-  .then(() => {
-    console.log("Connected to MongoDB");
-  })
-  .catch((err) => console.error("Error connecting to MongoDB:", err));
+if (mongoose.connection.readyState === 0) {
+  mongoose.connect(`${process.env.MONGODB_URI}/pokemonDB`, { family: 4 });
+}
 
-const userSchema = new mongoose.Schema({
-  username: String,
-  email: String,
-  pokemons: [
-    {
-      pokemon: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Pokemon",
+app.get("/api/pokemons", async (req: Request, res: Response) => {
+  try {
+    const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+
+    const skip = offset * limit;
+
+    const [pokemons, total] = await Promise.all([
+      Pokemon.find(
+        {},
+        { backSpriteUrl: 0, facts: 0 }, // exclude fields
+      )
+        .sort({ id: 1 })
+        .skip(skip)
+        .limit(limit)
+        .lean<IPokemon[]>(),
+
+      Pokemon.countDocuments(),
+    ]);
+
+    res.json({
+      data: pokemons,
+      pagination: {
+        total,
+        offset,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        hasNext: offset * limit < total,
+        hasPrev: offset > 0,
       },
-      count: Number,
-    },
-  ],
-  totalScore: Number,
-  weeklyScore: Number,
-  monthlyScore: Number,
-  pokecoins: Number,
-  totalPokemons: Number,
-  uniquePokemons: Number,
-  visitedPlayModes: Boolean,
-  visitedPokedex: Boolean,
-  visitedPokeMart: Boolean,
-  visitedTrade: Boolean,
-  visitedLeaderboards: Boolean,
-});
-
-const User = mongoose.model("User", userSchema);
-
-const pokemonSchema = new mongoose.Schema({
-  id: Number,
-  name: String,
-  frontSpriteUrl: String,
-  backSpriteUrl: String,
-  stats: {
-    hp: Number,
-    atk: Number,
-    def: Number,
-    splAtk: Number,
-    splDef: Number,
-    speed: Number,
-  },
-  types: [String],
-  facts: [String],
-  isLegendary: Boolean,
-  isMythical: Boolean,
-});
-
-const Pokemon = mongoose.model("Pokemon", pokemonSchema);
-
-app.post("/api/new-user", async (req, res) => {
-  try {
-    const { username, email } = req.body;
-    const existingUser = await User.findOne({ username });
-    if (existingUser) {
-      res
-        .status(400)
-        .json({ error: "Username is already taken by another user" });
-    } else {
-      const newUser = new User({
-        username,
-        email,
-        pokemons: [],
-        totalScore: 0,
-        weeklyScore: 0,
-        monthlyScore: 0,
-        pokecoins: 0,
-        totalPokemons: 0,
-        uniquePokemons: 0,
-        visitedPlayModes: false,
-        visitedPokedex: false,
-        visitedPokeMart: false,
-        visitedTrade: false,
-        visitedLeaderboards: false,
-      });
-      await newUser.save();
-      res
-        .status(200)
-        .json({ user: newUser });
-    }
-  } catch (error) {
-    console.error("Error processing username:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-app.get("/api/user", async (req, res) => {
-  try {
-    const userEmail = req.query.email;
-    const existingUser = await User.findOne({ email: userEmail });
-    res.json({ user: existingUser });
-  } catch (error) {
-    console.error("Error processing user data:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-app.get("/api/pokemons", async (req, res) => {
-  try {
-    const allPokemons = await Pokemon.find();
-    res.json(allPokemons);
+    });
   } catch (error) {
     console.error("Error fetching Pokémon data:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
-app.post("/api/update-user", async (req, res) => {
-  try {
-    const { email, updates } = req.body;
-    const updatedUser = await User.findOneAndUpdate(
-      { email: email },
-      { $set: updates },
-      { new: true }
-    );
-    if (!updatedUser) {
-      return res.status(404).json({ error: "User not found" });
-    }
-    res.status(200).json({ user: updatedUser });
-  } catch (error) {
-    console.error("Error updating user data:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
+app.post("/api/new-user", async (req: Request, res: Response) => {
+  const { username, email } = req.body as { username: string; email: string };
+
+  const existing = await User.findOne({ username });
+  if (existing) return res.status(400).json({ error: "Username taken" });
+
+  const user = await User.create({
+    username,
+    email,
+    pokemons: [],
+    totalScore: 0,
+    weeklyScore: 0,
+    monthlyScore: 0,
+    pokecoins: 0,
+    totalPokemons: 0,
+    uniquePokemons: 0,
+    visitedPlayModes: false,
+    visitedPokedex: false,
+    visitedPokeMart: false,
+    visitedTrade: false,
+    visitedLeaderboards: false,
+  });
+
+  res.json({ user });
 });
 
-app.post("/api/update-user-pokemons", async (req, res) => {
-  try {
-    const { email, pokemonList, cost } = req.body;
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    for (const item of pokemonList) {
-      const existingPokemon = user.pokemons.find(p => String(p.pokemon) === item.pokemon);
-      if (existingPokemon) {
-        existingPokemon.count += item.count;
-      } else {
-        user.pokemons.push({ pokemon: item.pokemon, count: item.count });
-      }
-    }
-
-    user.totalPokemons += pokemonList.length;
-
-    const uniquePokemonIds = new Set(user.pokemons.map(p => String(p.pokemon)));
-    user.uniquePokemons = uniquePokemonIds.size;
-
-    user.pokecoins -= cost;
-
-    await user.save();
-
-    res.status(200).json({ user });
-  } catch (error) {
-    console.error("Error updating user's Pokémon data:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
+app.get("/api/user", async (req: Request, res: Response) => {
+  const email = req.query.email as string;
+  const user = await User.findOne({ email });
+  res.json({ user });
 });
 
+app.post("/api/game/start", async (req: Request, res: Response) => {
+  const { type, userId } = req.body as { type: GameType; userId: string };
+
+  let generated: GameQuestion[];
+
+  if (type === "fact") generated = await generateFactQuiz();
+  else if (type === "scramble") generated = await generateScrambleQuiz();
+  else if (type === "image") generated = await generateImageQuiz();
+  else return res.status(400).json({ error: "Invalid type" });
+
+  const session = await GameSession.create({
+    userId,
+    type,
+    questions: generated.map((q) => ({
+      questionId: q.questionId,
+      correctAnswer: q.correctAnswer,
+    })),
+    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+  });
+
+  res.json({
+    sessionId: session._id,
+    questions: generated.map((q) => ({
+      questionId: q.questionId,
+      question: q.question,
+      options: q.options,
+    })),
+  });
+});
+
+app.post("/api/game/submit", async (req: Request, res: Response) => {
+  const { sessionId, answers, userId } = req.body as {
+    sessionId: string;
+    answers: Answer[];
+    userId: string;
+  };
+
+  const session = await GameSession.findById(sessionId);
+  if (!session) return res.status(404).json({ error: "Session not found" });
+  if (session.isCompleted)
+    return res.status(400).json({ error: "Already submitted" });
+
+  let score = 0;
+  const map = new Map(answers.map((a) => [a.questionId, a.selected]));
+
+  for (const q of session.questions) {
+    if (map.get(q.questionId) === q.correctAnswer) score++;
+  }
+
+  const xp = score;
+  const coins = score * 2;
+
+  session.isCompleted = true;
+  await session.save();
+
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { $inc: { totalScore: xp, pokecoins: coins } },
+    { new: true },
+  );
+
+  res.json({ score, rewards: { xp, coins }, user });
+});
 
 app.listen(3000, () => {
-  console.log(`Listening on port 3000`);
+  console.log('Server Started');
 });
