@@ -1,12 +1,12 @@
-import dawn from "../../Images/Characters/dawn.png";
+import brock from "../../Images/Characters/brock.png";
 import { useEffect, useState } from "react";
 import axios from "axios";
 
-function WhosThatPokemon({ userData, setUserData }) {
+function ScrambleSurge({ userData, setUserData }) {
   const [currentQuestionIndex, setQuestionIndex] = useState(0);
   const [optionChoice, setOptionChoice] = useState("");
   const [pokemons, setPokemons] = useState([]);
-  const [pokemonImageUrls, setPokemonImageUrls] = useState([]);
+  const [pokemonScrambledNameList, setpokemonScrambledNameList] = useState([]);
   const [quizComplete, setQuizComplete] = useState(false);
   const [score, setScore] = useState(0);
   const [scoreDialogue, setScoreDialogue] = useState();
@@ -14,7 +14,7 @@ function WhosThatPokemon({ userData, setUserData }) {
 
   useEffect(() => {
     axios
-      .get(`${process.env.REACT_APP_API_URL}/api/pokemons`)
+      .get(`${import.meta.env.VITE_APP_API_URL}/api/pokemons`)
       .then((response) => {
         setPokemons(response.data);
       })
@@ -24,7 +24,7 @@ function WhosThatPokemon({ userData, setUserData }) {
   }, []);
 
   useEffect(() => {
-    const generateOptions = (imageUrl, correctPokemon) => {
+    const generateOptions = (scrambledName, correctPokemon) => {
       const incorrectPokemons = pokemons.filter(
         (pokemon) => pokemon.name !== correctPokemon
       );
@@ -44,48 +44,53 @@ function WhosThatPokemon({ userData, setUserData }) {
     };
 
     if (pokemons.length > 0) {
-      const tempImageUrls = [];
+      const tempList = [];
       pokemons.forEach((pokemon) => {
-        tempImageUrls.push({
-          imageUrl: pokemon.frontSpriteUrl,
+        tempList.push({
+          scrambledName: pokemon.name.split('').sort(() => 0.5 - Math.random()).join(''),
           pokemon: pokemon.name,
         });
       });
 
-      tempImageUrls.sort(() => Math.random() - 0.5);
+      tempList.sort(() => Math.random() - 0.5);
 
-      const pokemonImageUrlsSet = new Set();
-      const pokemonImageUrlsArray = [];
-      for (const { imageUrl, pokemon } of tempImageUrls) {
-        if (!pokemonImageUrlsSet.has(imageUrl)) {
-          pokemonImageUrlsSet.add(imageUrl);
-          const options = generateOptions(imageUrl, pokemon);
-          pokemonImageUrlsArray.push({ imageUrl, pokemon, options, selected: "" });
+      const pokemonScrambledNameListSet = new Set();
+      const pokemonScrambledNameListArray = [];
+      for (const { scrambledName, pokemon } of tempList) {
+        if (!pokemonScrambledNameListSet.has(scrambledName)) {
+          pokemonScrambledNameListSet.add(scrambledName);
+          const options = generateOptions(scrambledName, pokemon);
+          pokemonScrambledNameListArray.push({
+            scrambledName,
+            pokemon,
+            options,
+            selected: "",
+          });
         }
-        if (pokemonImageUrlsArray.length === 10) break;
+        if (pokemonScrambledNameListArray.length === 10) break;
       }
-      setPokemonImageUrls(pokemonImageUrlsArray);
+      setpokemonScrambledNameList(pokemonScrambledNameListArray);
     }
   }, [pokemons]);
 
   const handleConfirmClick = (type) => {
-    const updatedImageUrls = [...pokemonImageUrls];
+    const updatedList = [...pokemonScrambledNameList];
     if (optionChoice) {
-      updatedImageUrls[currentQuestionIndex].selected = optionChoice;
+      updatedList[currentQuestionIndex].selected = optionChoice;
     }
-    setPokemonImageUrls(updatedImageUrls);
+    setpokemonScrambledNameList(updatedList);
     if (type === "next") {
       setQuestionIndex(
-        currentQuestionIndex < pokemonImageUrls.length - 1
+        currentQuestionIndex < pokemonScrambledNameList.length - 1
           ? currentQuestionIndex + 1
-          : pokemonImageUrls.length - 1
+          : pokemonScrambledNameList.length - 1
       );
     } else if (type === "previous") {
       setQuestionIndex(currentQuestionIndex > 0 ? currentQuestionIndex - 1 : 0);
     } else if (type === "confirm") {
       let totalScore = 0;
-      updatedImageUrls.forEach((imageUrl) => {
-        if (imageUrl.pokemon === imageUrl.selected) {
+      updatedList.forEach((scrambledName) => {
+        if (scrambledName.pokemon === scrambledName.selected) {
           totalScore += 1;
         }
       });
@@ -96,9 +101,9 @@ function WhosThatPokemon({ userData, setUserData }) {
   };
 
   const handleOptionClick = (option) => {
-    const updatedImageUrls = [...pokemonImageUrls];
-    updatedImageUrls[currentQuestionIndex].selected = "";
-    setPokemonImageUrls(updatedImageUrls);
+    const updatedList = [...pokemonScrambledNameList];
+    updatedList[currentQuestionIndex].selected = "";
+    setpokemonScrambledNameList(updatedList);
     setOptionChoice(option);
   };
 
@@ -144,11 +149,11 @@ function WhosThatPokemon({ userData, setUserData }) {
 
   const completeQuiz = () => {
     axios
-      .post(`${process.env.REACT_APP_API_URL}/api/update-user`, {
+      .post(`${import.meta.env.VITE_APP_API_URL}/api/update-user`, {
         email: userData.email,
         updates: {
-          totalScore: parseInt(userData.totalScore) + parseInt(score) * 2,
-          pokecoins: parseInt(userData.pokecoins) + parseInt(score) * 4,
+          totalScore: parseInt(userData.totalScore) + parseInt(score) * 1,
+          pokecoins: parseInt(userData.pokecoins) + parseInt(score) * 2,
         },
       })
       .then((response) => {
@@ -165,97 +170,91 @@ function WhosThatPokemon({ userData, setUserData }) {
   return (
     <div className="center-container">
       <div className="professors wtp-container">
-        <img
-          draggable="false"
-          className="dawn"
-          src={dawn}
-          alt="Dawn"
-        />
-        {pokemonImageUrls.length > 0 && (
+        <img draggable="false" className="brock" src={brock} alt="Brock" />
+        {pokemonScrambledNameList.length > 0 && (
           <>
             {!quizComplete ? (
               <div className="home-container">
                 <div className="home-text-container">
                   <p>
-                    <span className="dawn">DAWN: </span>Who's that Pokémon?
-                    pokemon
+                    <span className="brock">BROCK: </span>Who's that Pokémon?
                   </p>
                   <p className="pkmn-holder">
-                    <img className="wtp-pokemon" src={pokemonImageUrls[currentQuestionIndex]?.imageUrl} alt="pokemon" />
+                    {pokemonScrambledNameList[currentQuestionIndex]?.scrambledName}
                   </p>
                 </div>
                 <div className="grid-btn-container">
                   <button
                     className={`trivia-option ${
                       optionChoice ===
-                      pokemonImageUrls[currentQuestionIndex]?.options[0]
+                      pokemonScrambledNameList[currentQuestionIndex]?.options[0]
                         ? "active-btn"
-                        : pokemonImageUrls[currentQuestionIndex]?.selected ===
-                          pokemonImageUrls[currentQuestionIndex]?.options[0]
+                        : pokemonScrambledNameList[currentQuestionIndex]?.selected ===
+                          pokemonScrambledNameList[currentQuestionIndex]?.options[0]
                         ? "active-btn"
                         : ""
                     }`}
                     onClick={() => {
                       handleOptionClick(
-                        pokemonImageUrls[currentQuestionIndex]?.options[0]
+                        pokemonScrambledNameList[currentQuestionIndex]?.options[0]
                       );
                     }}
                   >
-                    {pokemonImageUrls[currentQuestionIndex]?.options[0]}
+                    {pokemonScrambledNameList[currentQuestionIndex]?.options[0]}
                   </button>
                   <button
                     className={`trivia-option ${
                       optionChoice ===
-                      pokemonImageUrls[currentQuestionIndex]?.options[1]
+                      pokemonScrambledNameList[currentQuestionIndex]?.options[1]
                         ? "active-btn"
-                        : pokemonImageUrls[currentQuestionIndex]?.selected ===
-                          pokemonImageUrls[currentQuestionIndex]?.options[1]
+                        : pokemonScrambledNameList[currentQuestionIndex]?.selected ===
+                          pokemonScrambledNameList[currentQuestionIndex]?.options[1]
                         ? "active-btn"
                         : ""
                     }`}
                     onClick={() => {
                       handleOptionClick(
-                        pokemonImageUrls[currentQuestionIndex]?.options[1]
+                        pokemonScrambledNameList[currentQuestionIndex]?.options[1]
                       );
                     }}
                   >
-                    {pokemonImageUrls[currentQuestionIndex]?.options[1]}
+                    {pokemonScrambledNameList[currentQuestionIndex]?.options[1]}
                   </button>
                   <button
                     className={`trivia-option ${
                       optionChoice ===
-                      pokemonImageUrls[currentQuestionIndex]?.options[2]
+                      pokemonScrambledNameList[currentQuestionIndex]?.options[2]
                         ? "active-btn"
-                        : pokemonImageUrls[currentQuestionIndex]?.selected ===
-                          pokemonImageUrls[currentQuestionIndex]?.options[2]
+                        : pokemonScrambledNameList[currentQuestionIndex]?.selected ===
+                          pokemonScrambledNameList[currentQuestionIndex]?.options[2]
                         ? "active-btn"
                         : ""
                     }`}
                     onClick={() => {
                       handleOptionClick(
-                        pokemonImageUrls[currentQuestionIndex]?.options[2]
+                        pokemonScrambledNameList[currentQuestionIndex]?.options[2]
                       );
                     }}
                   >
-                    {pokemonImageUrls[currentQuestionIndex]?.options[2]}
+                    {pokemonScrambledNameList[currentQuestionIndex]?.options[2]}
                   </button>
                   <button
                     className={`trivia-option ${
                       optionChoice ===
-                      pokemonImageUrls[currentQuestionIndex]?.options[3]
+                      pokemonScrambledNameList[currentQuestionIndex]?.options[3]
                         ? "active-btn"
-                        : pokemonImageUrls[currentQuestionIndex]?.selected ===
-                          pokemonImageUrls[currentQuestionIndex]?.options[3]
+                        : pokemonScrambledNameList[currentQuestionIndex]?.selected ===
+                          pokemonScrambledNameList[currentQuestionIndex]?.options[3]
                         ? "active-btn"
                         : ""
                     }`}
                     onClick={() => {
                       handleOptionClick(
-                        pokemonImageUrls[currentQuestionIndex]?.options[3]
+                        pokemonScrambledNameList[currentQuestionIndex]?.options[3]
                       );
                     }}
                   >
-                    {pokemonImageUrls[currentQuestionIndex]?.options[3]}
+                    {pokemonScrambledNameList[currentQuestionIndex]?.options[3]}
                   </button>
                 </div>
                 <div className="grid-btn-container">
@@ -266,13 +265,13 @@ function WhosThatPokemon({ userData, setUserData }) {
                   >
                     Previous
                   </button>
-                  {currentQuestionIndex < pokemonImageUrls.length - 1 ? (
+                  {currentQuestionIndex < pokemonScrambledNameList.length - 1 ? (
                     <button
                       className="home-btn next"
                       onClick={() => handleConfirmClick("next")}
                       disabled={
                         optionChoice ||
-                        pokemonImageUrls[currentQuestionIndex].selected
+                        pokemonScrambledNameList[currentQuestionIndex].selected
                           ? false
                           : true
                       }
@@ -285,7 +284,7 @@ function WhosThatPokemon({ userData, setUserData }) {
                       onClick={() => handleConfirmClick("confirm")}
                       disabled={
                         optionChoice ||
-                        pokemonImageUrls[currentQuestionIndex].selected
+                        pokemonScrambledNameList[currentQuestionIndex].selected
                           ? false
                           : true
                       }
@@ -301,11 +300,11 @@ function WhosThatPokemon({ userData, setUserData }) {
                   <>
                     <div className="home-text-container">
                       <p>
-                        <span className="dawn">DAWN: </span>You've completed
-                        the quiz with a score of {score}/10
+                        <span className="brock">BROCK: </span>You've completed the
+                        quiz with a score of {score}/10
                       </p>
                       <p>
-                        <span className="dawn">DAWN: </span>
+                        <span className="brock">BROCK: </span>
                         {scoreDialogue.dialogue}
                       </p>
                       {errorMessage && (
@@ -329,4 +328,4 @@ function WhosThatPokemon({ userData, setUserData }) {
   );
 }
 
-export default WhosThatPokemon;
+export default ScrambleSurge;

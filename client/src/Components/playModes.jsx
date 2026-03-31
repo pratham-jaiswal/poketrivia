@@ -58,7 +58,7 @@ function PlayModes({ userData, setUserData }) {
 
   const handleVisited = () => {
     axios
-      .post(`${process.env.REACT_APP_API_URL}/api/update-user`, {
+      .post(`${import.meta.env.VITE_APP_API_URL}/api/update-user`, {
         email: userData.email,
         updates: {
           visitedPlayModes: true,

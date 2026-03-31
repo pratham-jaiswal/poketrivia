@@ -1,4 +1,15 @@
 {
-    "include": ["src/**/*"],
-    "exclude": ["node_modules"]
+    "compilerOptions": {
+        "moduleResolution": "node",
+        "noImplicitAny": false,
+        "types": [
+            "node"
+        ]
+    },
+    "include": [
+        "api/**/*"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
 }

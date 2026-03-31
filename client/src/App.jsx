@@ -40,7 +40,7 @@ function App() {
     if (!isLoading) {
       if (isAuthenticated) {
         axios
-          .get(`${process.env.REACT_APP_API_URL}/api/user?email=${user.email}`)
+          .get(`${import.meta.env.VITE_APP_API_URL}/api/user?email=${user.email}`)
           .then((response) => {
             setUserData(response.data.user);
             setIsLoaded(true);

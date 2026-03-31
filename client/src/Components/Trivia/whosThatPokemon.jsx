@@ -1,12 +1,12 @@
-import kukui from "../../Images/Characters/kukui.png";
+import dawn from "../../Images/Characters/dawn.png";
 import { useEffect, useState } from "react";
 import axios from "axios";
 
-function PokeQuiz({ userData, setUserData }) {
+function WhosThatPokemon({ userData, setUserData }) {
   const [currentQuestionIndex, setQuestionIndex] = useState(0);
   const [optionChoice, setOptionChoice] = useState("");
   const [pokemons, setPokemons] = useState([]);
-  const [uniqueFacts, setUniqueFacts] = useState([]);
+  const [pokemonImageUrls, setPokemonImageUrls] = useState([]);
   const [quizComplete, setQuizComplete] = useState(false);
   const [score, setScore] = useState(0);
   const [scoreDialogue, setScoreDialogue] = useState();
@@ -14,7 +14,7 @@ function PokeQuiz({ userData, setUserData }) {
 
   useEffect(() => {
     axios
-      .get(`${process.env.REACT_APP_API_URL}/api/pokemons`)
+      .get(`${import.meta.env.VITE_APP_API_URL}/api/pokemons`)
       .then((response) => {
         setPokemons(response.data);
       })
@@ -24,7 +24,7 @@ function PokeQuiz({ userData, setUserData }) {
   }, []);
 
   useEffect(() => {
-    const generateOptions = (fact, correctPokemon) => {
+    const generateOptions = (imageUrl, correctPokemon) => {
       const incorrectPokemons = pokemons.filter(
         (pokemon) => pokemon.name !== correctPokemon
       );
@@ -35,9 +35,7 @@ function PokeQuiz({ userData, setUserData }) {
           incorrectPokemons[
             Math.floor(Math.random() * incorrectPokemons.length)
           ];
-        if (!randomPokemon.facts.includes(fact)) {
-          incorrectOptions.push(randomPokemon.name);
-        }
+        incorrectOptions.push(randomPokemon.name);
       }
 
       const options = [correctPokemon, ...incorrectOptions];
@@ -46,51 +44,48 @@ function PokeQuiz({ userData, setUserData }) {
     };
 
     if (pokemons.length > 0) {
-      const tempFacts = [];
+      const tempImageUrls = [];
       pokemons.forEach((pokemon) => {
-        pokemon.facts.forEach((fact) => {
-          const sanitizedFact = fact.replace(
-            new RegExp(pokemon.name, "gi"),
-            "_____"
-          );
-          tempFacts.push({ fact: sanitizedFact, pokemon: pokemon.name });
+        tempImageUrls.push({
+          imageUrl: pokemon.frontSpriteUrl,
+          pokemon: pokemon.name,
         });
       });
 
-      tempFacts.sort(() => Math.random() - 0.5);
+      tempImageUrls.sort(() => Math.random() - 0.5);
 
-      const uniqueFactsSet = new Set();
-      const uniqueFactsArray = [];
-      for (const { fact, pokemon } of tempFacts) {
-        if (!uniqueFactsSet.has(fact)) {
-          uniqueFactsSet.add(fact);
-          const options = generateOptions(fact, pokemon);
-          uniqueFactsArray.push({ fact, pokemon, options, selected: "" });
+      const pokemonImageUrlsSet = new Set();
+      const pokemonImageUrlsArray = [];
+      for (const { imageUrl, pokemon } of tempImageUrls) {
+        if (!pokemonImageUrlsSet.has(imageUrl)) {
+          pokemonImageUrlsSet.add(imageUrl);
+          const options = generateOptions(imageUrl, pokemon);
+          pokemonImageUrlsArray.push({ imageUrl, pokemon, options, selected: "" });
         }
-        if (uniqueFactsArray.length === 20) break;
+        if (pokemonImageUrlsArray.length === 10) break;
       }
-      setUniqueFacts(uniqueFactsArray);
+      setPokemonImageUrls(pokemonImageUrlsArray);
     }
   }, [pokemons]);
 
   const handleConfirmClick = (type) => {
-    const updatedFacts = [...uniqueFacts];
+    const updatedImageUrls = [...pokemonImageUrls];
     if (optionChoice) {
-      updatedFacts[currentQuestionIndex].selected = optionChoice;
+      updatedImageUrls[currentQuestionIndex].selected = optionChoice;
     }
-    setUniqueFacts(updatedFacts);
+    setPokemonImageUrls(updatedImageUrls);
     if (type === "next") {
       setQuestionIndex(
-        currentQuestionIndex < uniqueFacts.length - 1
+        currentQuestionIndex < pokemonImageUrls.length - 1
           ? currentQuestionIndex + 1
-          : uniqueFacts.length - 1
+          : pokemonImageUrls.length - 1
       );
     } else if (type === "previous") {
       setQuestionIndex(currentQuestionIndex > 0 ? currentQuestionIndex - 1 : 0);
     } else if (type === "confirm") {
       let totalScore = 0;
-      updatedFacts.forEach((fact) => {
-        if (fact.pokemon === fact.selected) {
+      updatedImageUrls.forEach((imageUrl) => {
+        if (imageUrl.pokemon === imageUrl.selected) {
           totalScore += 1;
         }
       });
@@ -101,9 +96,9 @@ function PokeQuiz({ userData, setUserData }) {
   };
 
   const handleOptionClick = (option) => {
-    const updatedFacts = [...uniqueFacts];
-    updatedFacts[currentQuestionIndex].selected = "";
-    setUniqueFacts(updatedFacts);
+    const updatedImageUrls = [...pokemonImageUrls];
+    updatedImageUrls[currentQuestionIndex].selected = "";
+    setPokemonImageUrls(updatedImageUrls);
     setOptionChoice(option);
   };
 
@@ -132,13 +127,13 @@ function PokeQuiz({ userData, setUserData }) {
         },
       ];
       let i = 0;
-      if (score === 20) {
+      if (score === 10) {
         i = 0;
-      } else if (score >= 16) {
-        i = 1;
-      } else if (score >= 12) {
-        i = 2;
       } else if (score >= 8) {
+        i = 1;
+      } else if (score >= 6) {
+        i = 2;
+      } else if (score >= 4) {
         i = 3;
       } else {
         i = 4;
@@ -149,11 +144,11 @@ function PokeQuiz({ userData, setUserData }) {
 
   const completeQuiz = () => {
     axios
-      .post(`${process.env.REACT_APP_API_URL}/api/update-user`, {
+      .post(`${import.meta.env.VITE_APP_API_URL}/api/update-user`, {
         email: userData.email,
         updates: {
-          totalScore: parseInt(userData.totalScore) + parseInt(score),
-          pokecoins: parseInt(userData.pokecoins) + parseInt(score) * 2,
+          totalScore: parseInt(userData.totalScore) + parseInt(score) * 2,
+          pokecoins: parseInt(userData.pokecoins) + parseInt(score) * 4,
         },
       })
       .then((response) => {
@@ -169,99 +164,98 @@ function PokeQuiz({ userData, setUserData }) {
 
   return (
     <div className="center-container">
-      <div className="professors">
+      <div className="professors wtp-container">
         <img
           draggable="false"
-          className="kukui"
-          src={kukui}
-          alt="Professor Kukui"
+          className="dawn"
+          src={dawn}
+          alt="Dawn"
         />
-        {uniqueFacts.length > 0 && (
+        {pokemonImageUrls.length > 0 && (
           <>
             {!quizComplete ? (
               <div className="home-container">
                 <div className="home-text-container">
                   <p>
-                    <span className="kukui">KUKUI: </span>Choose the correct
+                    <span className="dawn">DAWN: </span>Who's that Pokémon?
                     pokemon
                   </p>
-                  <p>
-                    <span className="kukui">KUKUI: </span>
-                    {uniqueFacts[currentQuestionIndex]?.fact}
+                  <p className="pkmn-holder">
+                    <img className="wtp-pokemon" src={pokemonImageUrls[currentQuestionIndex]?.imageUrl} alt="pokemon" />
                   </p>
                 </div>
                 <div className="grid-btn-container">
                   <button
                     className={`trivia-option ${
                       optionChoice ===
-                      uniqueFacts[currentQuestionIndex]?.options[0]
+                      pokemonImageUrls[currentQuestionIndex]?.options[0]
                         ? "active-btn"
-                        : uniqueFacts[currentQuestionIndex]?.selected ===
-                          uniqueFacts[currentQuestionIndex]?.options[0]
+                        : pokemonImageUrls[currentQuestionIndex]?.selected ===
+                          pokemonImageUrls[currentQuestionIndex]?.options[0]
                         ? "active-btn"
                         : ""
                     }`}
                     onClick={() => {
                       handleOptionClick(
-                        uniqueFacts[currentQuestionIndex]?.options[0]
+                        pokemonImageUrls[currentQuestionIndex]?.options[0]
                       );
                     }}
                   >
-                    {uniqueFacts[currentQuestionIndex]?.options[0]}
+                    {pokemonImageUrls[currentQuestionIndex]?.options[0]}
                   </button>
                   <button
                     className={`trivia-option ${
                       optionChoice ===
-                      uniqueFacts[currentQuestionIndex]?.options[1]
+                      pokemonImageUrls[currentQuestionIndex]?.options[1]
                         ? "active-btn"
-                        : uniqueFacts[currentQuestionIndex]?.selected ===
-                          uniqueFacts[currentQuestionIndex]?.options[1]
+                        : pokemonImageUrls[currentQuestionIndex]?.selected ===
+                          pokemonImageUrls[currentQuestionIndex]?.options[1]
                         ? "active-btn"
                         : ""
                     }`}
                     onClick={() => {
                       handleOptionClick(
-                        uniqueFacts[currentQuestionIndex]?.options[1]
+                        pokemonImageUrls[currentQuestionIndex]?.options[1]
                       );
                     }}
                   >
-                    {uniqueFacts[currentQuestionIndex]?.options[1]}
+                    {pokemonImageUrls[currentQuestionIndex]?.options[1]}
                   </button>
                   <button
                     className={`trivia-option ${
                       optionChoice ===
-                      uniqueFacts[currentQuestionIndex]?.options[2]
+                      pokemonImageUrls[currentQuestionIndex]?.options[2]
                         ? "active-btn"
-                        : uniqueFacts[currentQuestionIndex]?.selected ===
-                          uniqueFacts[currentQuestionIndex]?.options[2]
+                        : pokemonImageUrls[currentQuestionIndex]?.selected ===
+                          pokemonImageUrls[currentQuestionIndex]?.options[2]
                         ? "active-btn"
                         : ""
                     }`}
                     onClick={() => {
                       handleOptionClick(
-                        uniqueFacts[currentQuestionIndex]?.options[2]
+                        pokemonImageUrls[currentQuestionIndex]?.options[2]
                       );
                     }}
                   >
-                    {uniqueFacts[currentQuestionIndex]?.options[2]}
+                    {pokemonImageUrls[currentQuestionIndex]?.options[2]}
                   </button>
                   <button
                     className={`trivia-option ${
                       optionChoice ===
-                      uniqueFacts[currentQuestionIndex]?.options[3]
+                      pokemonImageUrls[currentQuestionIndex]?.options[3]
                         ? "active-btn"
-                        : uniqueFacts[currentQuestionIndex]?.selected ===
-                          uniqueFacts[currentQuestionIndex]?.options[3]
+                        : pokemonImageUrls[currentQuestionIndex]?.selected ===
+                          pokemonImageUrls[currentQuestionIndex]?.options[3]
                         ? "active-btn"
                         : ""
                     }`}
                     onClick={() => {
                       handleOptionClick(
-                        uniqueFacts[currentQuestionIndex]?.options[3]
+                        pokemonImageUrls[currentQuestionIndex]?.options[3]
                       );
                     }}
                   >
-                    {uniqueFacts[currentQuestionIndex]?.options[3]}
+                    {pokemonImageUrls[currentQuestionIndex]?.options[3]}
                   </button>
                 </div>
                 <div className="grid-btn-container">
@@ -272,13 +266,13 @@ function PokeQuiz({ userData, setUserData }) {
                   >
                     Previous
                   </button>
-                  {currentQuestionIndex < uniqueFacts.length - 1 ? (
+                  {currentQuestionIndex < pokemonImageUrls.length - 1 ? (
                     <button
                       className="home-btn next"
                       onClick={() => handleConfirmClick("next")}
                       disabled={
                         optionChoice ||
-                        uniqueFacts[currentQuestionIndex].selected
+                        pokemonImageUrls[currentQuestionIndex].selected
                           ? false
                           : true
                       }
@@ -291,7 +285,7 @@ function PokeQuiz({ userData, setUserData }) {
                       onClick={() => handleConfirmClick("confirm")}
                       disabled={
                         optionChoice ||
-                        uniqueFacts[currentQuestionIndex].selected
+                        pokemonImageUrls[currentQuestionIndex].selected
                           ? false
                           : true
                       }
@@ -307,11 +301,11 @@ function PokeQuiz({ userData, setUserData }) {
                   <>
                     <div className="home-text-container">
                       <p>
-                        <span className="kukui">KUKUI: </span>You've completed
-                        the quiz with a score of {score}/20
+                        <span className="dawn">DAWN: </span>You've completed
+                        the quiz with a score of {score}/10
                       </p>
                       <p>
-                        <span className="kukui">KUKUI: </span>
+                        <span className="dawn">DAWN: </span>
                         {scoreDialogue.dialogue}
                       </p>
                       {errorMessage && (
@@ -335,4 +329,4 @@ function PokeQuiz({ userData, setUserData }) {
   );
 }
 
-export default PokeQuiz;
+export default WhosThatPokemon;

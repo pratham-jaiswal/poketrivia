@@ -14,7 +14,7 @@ function Pokedex({ userData }) {
 
   useEffect(() => {
     axios
-      .get(`${process.env.REACT_APP_API_URL}/api/pokemons`)
+      .get(`${import.meta.env.VITE_APP_API_URL}/api/pokemons`)
       .then((response) => {
         setPokemons(response.data);
       })

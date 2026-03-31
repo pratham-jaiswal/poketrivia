@@ -53,7 +53,7 @@ function PokeMart({ userData, setUserData }) {
 
   useEffect(() => {
     axios
-      .get(`${process.env.REACT_APP_API_URL}/api/pokemons`)
+      .get(`${import.meta.env.VITE_APP_API_URL}/api/pokemons`)
       .then((response) => {
         setPokemons(response.data);
       })
@@ -128,7 +128,7 @@ function PokeMart({ userData, setUserData }) {
     }));
 
     axios
-      .post(`${process.env.REACT_APP_API_URL}/api/update-user-pokemons`, {
+      .post(`${import.meta.env.VITE_APP_API_URL}/api/update-user-pokemons`, {
         email: userData.email,
         pokemonList: hatchedPokemonsData,
         cost: eggOptionPrice[activeMode],
@@ -180,7 +180,7 @@ function PokeMart({ userData, setUserData }) {
 
   const handleVisited = () => {
     axios
-      .post(`${process.env.REACT_APP_API_URL}/api/update-user`, {
+      .post(`${import.meta.env.VITE_APP_API_URL}/api/update-user`, {
         email: userData.email,
         updates: {
           visitedPokeMart: true,

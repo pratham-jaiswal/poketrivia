@@ -1,8 +1,7 @@
-import React from "react";
 import { Link } from "react-router-dom";
-import LoginButton from "../Auth0/loginButton";
+import LoginButton from "../Auth/loginButton";
 import poketrivia from "../Images/poketrivia.png";
-import LogoutButton from "../Auth0/logoutButton";
+import LogoutButton from "../Auth/logoutButton";
 
 function Navbar({ isAuthenticated, userData }) {
   return (

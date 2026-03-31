@@ -1,12 +1,12 @@
-import brock from "../../Images/Characters/brock.png";
+import kukui from "../../Images/Characters/kukui.png";
 import { useEffect, useState } from "react";
 import axios from "axios";
 
-function ScrambleSurge({ userData, setUserData }) {
+function PokeQuiz({ userData, setUserData }) {
   const [currentQuestionIndex, setQuestionIndex] = useState(0);
   const [optionChoice, setOptionChoice] = useState("");
   const [pokemons, setPokemons] = useState([]);
-  const [pokemonScrambledNameList, setpokemonScrambledNameList] = useState([]);
+  const [uniqueFacts, setUniqueFacts] = useState([]);
   const [quizComplete, setQuizComplete] = useState(false);
   const [score, setScore] = useState(0);
   const [scoreDialogue, setScoreDialogue] = useState();
@@ -14,7 +14,7 @@ function ScrambleSurge({ userData, setUserData }) {
 
   useEffect(() => {
     axios
-      .get(`${process.env.REACT_APP_API_URL}/api/pokemons`)
+      .get(`${import.meta.env.VITE_APP_API_URL}/api/pokemons`)
       .then((response) => {
         setPokemons(response.data);
       })
@@ -24,7 +24,7 @@ function ScrambleSurge({ userData, setUserData }) {
   }, []);
 
   useEffect(() => {
-    const generateOptions = (scrambledName, correctPokemon) => {
+    const generateOptions = (fact, correctPokemon) => {
       const incorrectPokemons = pokemons.filter(
         (pokemon) => pokemon.name !== correctPokemon
       );
@@ -35,7 +35,9 @@ function ScrambleSurge({ userData, setUserData }) {
           incorrectPokemons[
             Math.floor(Math.random() * incorrectPokemons.length)
           ];
-        incorrectOptions.push(randomPokemon.name);
+        if (!randomPokemon.facts.includes(fact)) {
+          incorrectOptions.push(randomPokemon.name);
+        }
       }
 
       const options = [correctPokemon, ...incorrectOptions];
@@ -44,53 +46,51 @@ function ScrambleSurge({ userData, setUserData }) {
     };
 
     if (pokemons.length > 0) {
-      const tempList = [];
+      const tempFacts = [];
       pokemons.forEach((pokemon) => {
-        tempList.push({
-          scrambledName: pokemon.name.split('').sort(() => 0.5 - Math.random()).join(''),
-          pokemon: pokemon.name,
+        pokemon.facts.forEach((fact) => {
+          const sanitizedFact = fact.replace(
+            new RegExp(pokemon.name, "gi"),
+            "_____"
+          );
+          tempFacts.push({ fact: sanitizedFact, pokemon: pokemon.name });
         });
       });
 
-      tempList.sort(() => Math.random() - 0.5);
+      tempFacts.sort(() => Math.random() - 0.5);
 
-      const pokemonScrambledNameListSet = new Set();
-      const pokemonScrambledNameListArray = [];
-      for (const { scrambledName, pokemon } of tempList) {
-        if (!pokemonScrambledNameListSet.has(scrambledName)) {
-          pokemonScrambledNameListSet.add(scrambledName);
-          const options = generateOptions(scrambledName, pokemon);
-          pokemonScrambledNameListArray.push({
-            scrambledName,
-            pokemon,
-            options,
-            selected: "",
-          });
+      const uniqueFactsSet = new Set();
+      const uniqueFactsArray = [];
+      for (const { fact, pokemon } of tempFacts) {
+        if (!uniqueFactsSet.has(fact)) {
+          uniqueFactsSet.add(fact);
+          const options = generateOptions(fact, pokemon);
+          uniqueFactsArray.push({ fact, pokemon, options, selected: "" });
         }
-        if (pokemonScrambledNameListArray.length === 10) break;
+        if (uniqueFactsArray.length === 20) break;
       }
-      setpokemonScrambledNameList(pokemonScrambledNameListArray);
+      setUniqueFacts(uniqueFactsArray);
     }
   }, [pokemons]);
 
   const handleConfirmClick = (type) => {
-    const updatedList = [...pokemonScrambledNameList];
+    const updatedFacts = [...uniqueFacts];
     if (optionChoice) {
-      updatedList[currentQuestionIndex].selected = optionChoice;
+      updatedFacts[currentQuestionIndex].selected = optionChoice;
     }
-    setpokemonScrambledNameList(updatedList);
+    setUniqueFacts(updatedFacts);
     if (type === "next") {
       setQuestionIndex(
-        currentQuestionIndex < pokemonScrambledNameList.length - 1
+        currentQuestionIndex < uniqueFacts.length - 1
           ? currentQuestionIndex + 1
-          : pokemonScrambledNameList.length - 1
+          : uniqueFacts.length - 1
       );
     } else if (type === "previous") {
       setQuestionIndex(currentQuestionIndex > 0 ? currentQuestionIndex - 1 : 0);
     } else if (type === "confirm") {
       let totalScore = 0;
-      updatedList.forEach((scrambledName) => {
-        if (scrambledName.pokemon === scrambledName.selected) {
+      updatedFacts.forEach((fact) => {
+        if (fact.pokemon === fact.selected) {
           totalScore += 1;
         }
       });
@@ -101,9 +101,9 @@ function ScrambleSurge({ userData, setUserData }) {
   };
 
   const handleOptionClick = (option) => {
-    const updatedList = [...pokemonScrambledNameList];
-    updatedList[currentQuestionIndex].selected = "";
-    setpokemonScrambledNameList(updatedList);
+    const updatedFacts = [...uniqueFacts];
+    updatedFacts[currentQuestionIndex].selected = "";
+    setUniqueFacts(updatedFacts);
     setOptionChoice(option);
   };
 
@@ -132,13 +132,13 @@ function ScrambleSurge({ userData, setUserData }) {
         },
       ];
       let i = 0;
-      if (score === 10) {
+      if (score === 20) {
         i = 0;
-      } else if (score >= 8) {
+      } else if (score >= 16) {
         i = 1;
-      } else if (score >= 6) {
+      } else if (score >= 12) {
         i = 2;
-      } else if (score >= 4) {
+      } else if (score >= 8) {
         i = 3;
       } else {
         i = 4;
@@ -149,10 +149,10 @@ function ScrambleSurge({ userData, setUserData }) {
 
   const completeQuiz = () => {
     axios
-      .post(`${process.env.REACT_APP_API_URL}/api/update-user`, {
+      .post(`${import.meta.env.VITE_APP_API_URL}/api/update-user`, {
         email: userData.email,
         updates: {
-          totalScore: parseInt(userData.totalScore) + parseInt(score) * 1,
+          totalScore: parseInt(userData.totalScore) + parseInt(score),
           pokecoins: parseInt(userData.pokecoins) + parseInt(score) * 2,
         },
       })
@@ -169,92 +169,99 @@ function ScrambleSurge({ userData, setUserData }) {
 
   return (
     <div className="center-container">
-      <div className="professors wtp-container">
-        <img draggable="false" className="brock" src={brock} alt="Brock" />
-        {pokemonScrambledNameList.length > 0 && (
+      <div className="professors">
+        <img
+          draggable="false"
+          className="kukui"
+          src={kukui}
+          alt="Professor Kukui"
+        />
+        {uniqueFacts.length > 0 && (
           <>
             {!quizComplete ? (
               <div className="home-container">
                 <div className="home-text-container">
                   <p>
-                    <span className="brock">BROCK: </span>Who's that Pokémon?
+                    <span className="kukui">KUKUI: </span>Choose the correct
+                    pokemon
                   </p>
-                  <p className="pkmn-holder">
-                    {pokemonScrambledNameList[currentQuestionIndex]?.scrambledName}
+                  <p>
+                    <span className="kukui">KUKUI: </span>
+                    {uniqueFacts[currentQuestionIndex]?.fact}
                   </p>
                 </div>
                 <div className="grid-btn-container">
                   <button
                     className={`trivia-option ${
                       optionChoice ===
-                      pokemonScrambledNameList[currentQuestionIndex]?.options[0]
+                      uniqueFacts[currentQuestionIndex]?.options[0]
                         ? "active-btn"
-                        : pokemonScrambledNameList[currentQuestionIndex]?.selected ===
-                          pokemonScrambledNameList[currentQuestionIndex]?.options[0]
+                        : uniqueFacts[currentQuestionIndex]?.selected ===
+                          uniqueFacts[currentQuestionIndex]?.options[0]
                         ? "active-btn"
                         : ""
                     }`}
                     onClick={() => {
                       handleOptionClick(
-                        pokemonScrambledNameList[currentQuestionIndex]?.options[0]
+                        uniqueFacts[currentQuestionIndex]?.options[0]
                       );
                     }}
                   >
-                    {pokemonScrambledNameList[currentQuestionIndex]?.options[0]}
+                    {uniqueFacts[currentQuestionIndex]?.options[0]}
                   </button>
                   <button
                     className={`trivia-option ${
                       optionChoice ===
-                      pokemonScrambledNameList[currentQuestionIndex]?.options[1]
+                      uniqueFacts[currentQuestionIndex]?.options[1]
                         ? "active-btn"
-                        : pokemonScrambledNameList[currentQuestionIndex]?.selected ===
-                          pokemonScrambledNameList[currentQuestionIndex]?.options[1]
+                        : uniqueFacts[currentQuestionIndex]?.selected ===
+                          uniqueFacts[currentQuestionIndex]?.options[1]
                         ? "active-btn"
                         : ""
                     }`}
                     onClick={() => {
                       handleOptionClick(
-                        pokemonScrambledNameList[currentQuestionIndex]?.options[1]
+                        uniqueFacts[currentQuestionIndex]?.options[1]
                       );
                     }}
                   >
-                    {pokemonScrambledNameList[currentQuestionIndex]?.options[1]}
+                    {uniqueFacts[currentQuestionIndex]?.options[1]}
                   </button>
                   <button
                     className={`trivia-option ${
                       optionChoice ===
-                      pokemonScrambledNameList[currentQuestionIndex]?.options[2]
+                      uniqueFacts[currentQuestionIndex]?.options[2]
                         ? "active-btn"
-                        : pokemonScrambledNameList[currentQuestionIndex]?.selected ===
-                          pokemonScrambledNameList[currentQuestionIndex]?.options[2]
+                        : uniqueFacts[currentQuestionIndex]?.selected ===
+                          uniqueFacts[currentQuestionIndex]?.options[2]
                         ? "active-btn"
                         : ""
                     }`}
                     onClick={() => {
                       handleOptionClick(
-                        pokemonScrambledNameList[currentQuestionIndex]?.options[2]
+                        uniqueFacts[currentQuestionIndex]?.options[2]
                       );
                     }}
                   >
-                    {pokemonScrambledNameList[currentQuestionIndex]?.options[2]}
+                    {uniqueFacts[currentQuestionIndex]?.options[2]}
                   </button>
                   <button
                     className={`trivia-option ${
                       optionChoice ===
-                      pokemonScrambledNameList[currentQuestionIndex]?.options[3]
+                      uniqueFacts[currentQuestionIndex]?.options[3]
                         ? "active-btn"
-                        : pokemonScrambledNameList[currentQuestionIndex]?.selected ===
-                          pokemonScrambledNameList[currentQuestionIndex]?.options[3]
+                        : uniqueFacts[currentQuestionIndex]?.selected ===
+                          uniqueFacts[currentQuestionIndex]?.options[3]
                         ? "active-btn"
                         : ""
                     }`}
                     onClick={() => {
                       handleOptionClick(
-                        pokemonScrambledNameList[currentQuestionIndex]?.options[3]
+                        uniqueFacts[currentQuestionIndex]?.options[3]
                       );
                     }}
                   >
-                    {pokemonScrambledNameList[currentQuestionIndex]?.options[3]}
+                    {uniqueFacts[currentQuestionIndex]?.options[3]}
                   </button>
                 </div>
                 <div className="grid-btn-container">
@@ -265,13 +272,13 @@ function ScrambleSurge({ userData, setUserData }) {
                   >
                     Previous
                   </button>
-                  {currentQuestionIndex < pokemonScrambledNameList.length - 1 ? (
+                  {currentQuestionIndex < uniqueFacts.length - 1 ? (
                     <button
                       className="home-btn next"
                       onClick={() => handleConfirmClick("next")}
                       disabled={
                         optionChoice ||
-                        pokemonScrambledNameList[currentQuestionIndex].selected
+                        uniqueFacts[currentQuestionIndex].selected
                           ? false
                           : true
                       }
@@ -284,7 +291,7 @@ function ScrambleSurge({ userData, setUserData }) {
                       onClick={() => handleConfirmClick("confirm")}
                       disabled={
                         optionChoice ||
-                        pokemonScrambledNameList[currentQuestionIndex].selected
+                        uniqueFacts[currentQuestionIndex].selected
                           ? false
                           : true
                       }
@@ -300,11 +307,11 @@ function ScrambleSurge({ userData, setUserData }) {
                   <>
                     <div className="home-text-container">
                       <p>
-                        <span className="brock">BROCK: </span>You've completed the
-                        quiz with a score of {score}/10
+                        <span className="kukui">KUKUI: </span>You've completed
+                        the quiz with a score of {score}/20
                       </p>
                       <p>
-                        <span className="brock">BROCK: </span>
+                        <span className="kukui">KUKUI: </span>
                         {scoreDialogue.dialogue}
                       </p>
                       {errorMessage && (
@@ -328,4 +335,4 @@ function ScrambleSurge({ userData, setUserData }) {
   );
 }
 
-export default ScrambleSurge;
+export default PokeQuiz;
