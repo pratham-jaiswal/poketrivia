@@ -1,5 +1,5 @@
 import { Schema, model } from "mongoose";
-import type { IUser, IPokemon, IGameSession } from "./custom_types.ts"
+import type { IUser, IPokemon, IGameSession } from "./custom_types.ts";
 
 const userSchema = new Schema<IUser>({
   username: String,
@@ -47,17 +47,22 @@ const pokemonSchema = new Schema<IPokemon>({
 export const Pokemon = model<IPokemon>("Pokemon", pokemonSchema);
 
 const gameSessionSchema = new Schema<IGameSession>({
-  userId: String,
-  type: { type: String, enum: ["fact", "scramble", "image"] },
+  userId: { type: String, index: true, required: true },
+  type: { type: String, enum: ["fact", "scramble", "image"], required: true },
   questions: [
     {
-      questionId: String,
-      correctAnswer: String,
+      questionId: { type: String, required: true },
+      correctAnswer: { type: String, required: true },
     },
   ],
-  createdAt: { type: Date, default: Date.now },
-  expiresAt: { type: Date, index: { expires: 0 } },
+  createdAt: { type: Date, default: Date.now, index: true },
+  attemptedAt: Date,
+  expiresAt: { type: Date, required: true, index: { expires: 0 } },
   isCompleted: { type: Boolean, default: false },
 });
+gameSessionSchema.index({ userId: 1, isCompleted: 1 });
 
-export const GameSession = model<IGameSession>("GameSession", gameSessionSchema);
+export const GameSession = model<IGameSession>(
+  "GameSession",
+  gameSessionSchema,
+);

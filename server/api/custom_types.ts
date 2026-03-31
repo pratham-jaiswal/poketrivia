@@ -64,6 +64,7 @@ export interface IGameSession {
     correctAnswer: string;
   }[];
   createdAt: Date;
+  attemptedAt: Date;
   expiresAt: Date;
   isCompleted: boolean;
 }

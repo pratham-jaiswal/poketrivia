@@ -40,7 +40,9 @@ export async function generateFactQuiz(count = 20): Promise<GameQuestion[]> {
   return questions;
 }
 
-export async function generateScrambleQuiz(count = 10): Promise<GameQuestion[]> {
+export async function generateScrambleQuiz(
+  count = 10,
+): Promise<GameQuestion[]> {
   const pokemons = (await Pokemon.find(
     {},
     { name: 1 },
@@ -85,11 +87,16 @@ export async function generateImageQuiz(count = 10): Promise<GameQuestion[]> {
       responseType: "arraybuffer",
     });
 
-    const silhouette = await sharp(Buffer.from(img.data))
-      .grayscale()
-      .threshold(50)
-      .toBuffer();
+    const original = sharp(Buffer.from(img.data)).ensureAlpha();
 
+    const alpha = await original.clone().extractChannel("alpha").toBuffer();
+
+    const silhouette = await sharp(alpha)
+      .threshold(1)
+      .toColourspace("b-w")
+      .joinChannel(alpha) // 👈 key
+      .png()
+      .toBuffer();
     const base64 = `data:image/png;base64,${silhouette.toString("base64")}`;
 
     const incorrect = getRandomElements(
