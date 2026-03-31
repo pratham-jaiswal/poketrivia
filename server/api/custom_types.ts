@@ -38,6 +38,7 @@ export interface IUser {
 export type UserDoc = HydratedDocument<IUser>;
 
 export interface IPokemon {
+  _id: Types.ObjectId; 
   id: number;
   name: string;
   frontSpriteUrl: string;

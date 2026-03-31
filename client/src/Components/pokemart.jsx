@@ -1,5 +1,5 @@
 import joy from "../Images/Characters/joy.png";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 
@@ -8,13 +8,6 @@ function PokeMart({ userData, setUserData }) {
   const [activeMode, setActiveMode] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [hatching, setHatching] = useState(false);
-  const [pokemons, setPokemons] = useState([]);
-  const [
-    ownedNonLegendaryMythicalPokemons,
-    setOwnedNonLegendaryMythicalPokemons,
-  ] = useState([]);
-  const [ownedMythicalPokemons, setOwnedMythicalPokemons] = useState([]);
-  const [ownedLegendaryPokemons, setOwnedLegendaryPokemons] = useState([]);
   const [hatchedPokemonList, setHatchedPokemonList] = useState([]);
 
   const dialogues = [
@@ -47,345 +40,180 @@ function PokeMart({ userData, setUserData }) {
     "one-mythical-egg": 8000,
   };
 
-  const isPokemonOwned = useCallback(
-    (pokemonId) => {
-      return userData.pokemons.some((pokemon) => pokemon.pokemon === pokemonId);
-    },
-    [userData.pokemons],
-  );
+  const handleHatch = async () => {
+    try {
+      setHatching(true);
 
-  useEffect(() => {
-    axios
-      .get(`${import.meta.env.VITE_APP_API_URL}/api/pokemons`)
-      .then((response) => {
-        setPokemons(response.data);
-      })
-      .catch((error) => {
-        console.error("Error sending user data to backend:", error);
-      });
-  }, []);
+      const res = await axios.post(
+        `${import.meta.env.VITE_APP_API_URL}/api/pokemart/hatch`,
+        {
+          userId: userData._id,
+          mode: activeMode,
+        },
+      );
 
-  useEffect(() => {
-    const owned = pokemons.filter((pokemon) => isPokemonOwned(pokemon._id));
-
-    const ownedNonLegendaryMythical = owned.filter(
-      (pokemon) => !pokemon.isLegendary && !pokemon.isMythical,
-    );
-    setOwnedNonLegendaryMythicalPokemons(ownedNonLegendaryMythical);
-
-    const ownedLegendary = owned.filter((pokemon) => pokemon.isLegendary);
-    setOwnedLegendaryPokemons(ownedLegendary);
-
-    const ownedMythical = owned.filter((pokemon) => pokemon.isMythical);
-    setOwnedMythicalPokemons(ownedMythical);
-  }, [isPokemonOwned, pokemons]);
-
-  const filterOwnedPokemons = (pokemons, owned) => {
-    return pokemons.filter(
-      (pokemon) =>
-        !owned.some((ownedPokemon) => ownedPokemon._id === pokemon._id),
-    );
-  };
-
-  const getNotOwnedPokemons = (mode) => {
-    let notOwnedPokemons = [];
-    switch (mode) {
-      case "one-egg":
-      case "five-eggs":
-      case "ten-eggs":
-        notOwnedPokemons = filterOwnedPokemons(
-          pokemons,
-          ownedNonLegendaryMythicalPokemons,
-        );
-        break;
-      case "one-legendary-egg":
-        notOwnedPokemons = filterOwnedPokemons(
-          pokemons.filter((pokemon) => pokemon.isLegendary),
-          ownedLegendaryPokemons,
-        );
-        break;
-      case "one-mythical-egg":
-        notOwnedPokemons = filterOwnedPokemons(
-          pokemons.filter((pokemon) => pokemon.isMythical),
-          ownedMythicalPokemons,
-        );
-        break;
-      default:
-        break;
+      setHatchedPokemonList(res.data.hatched);
+      setUserData(res.data.user);
+    } catch (err) {
+      setErrorMessage(
+        "Oops, it seems something unexpected occurred. Please take a moment to rest while I work on resolving the issue.",
+      );
+      setHatching(false);
     }
-    return notOwnedPokemons;
-  };
-
-  const handleHatch = () => {
-    setHatching(true);
-    const notOwnedPokemons = getNotOwnedPokemons(activeMode);
-    const hatchedPokemons = shuffleArray(notOwnedPokemons).slice(
-      0,
-      getHatchQuantity(activeMode),
-    );
-    setHatchedPokemonList(hatchedPokemons);
-
-    const hatchedPokemonsData = hatchedPokemons.map((pokemon) => ({
-      pokemon: pokemon._id,
-      count: 1,
-    }));
-
-    axios
-      .post(`${import.meta.env.VITE_APP_API_URL}/api/update-user-pokemons`, {
-        email: userData.email,
-        pokemonList: hatchedPokemonsData,
-        cost: eggOptionPrice[activeMode],
-      })
-      .then((response) => {
-        setUserData(response.data.user);
-      })
-      .catch((error) => {
-        setErrorMessage(
-          "Oops, it seems something unexpected occurred. Please take a moment to rest while I work on resolving the issue.",
-        );
-        setHatching(false);
-      });
-  };
-
-  const getHatchQuantity = (mode) => {
-    switch (mode) {
-      case "one-egg":
-        return 1;
-      case "five-eggs":
-        return 5;
-      case "ten-eggs":
-        return 10;
-      case "one-legendary-egg":
-      case "one-mythical-egg":
-        return 1;
-      default:
-        return 0;
-    }
-  };
-
-  const shuffleArray = (array) => {
-    const shuffledArray = [...array];
-    for (let i = shuffledArray.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffledArray[i], shuffledArray[j]] = [
-        shuffledArray[j],
-        shuffledArray[i],
-      ];
-    }
-    return shuffledArray;
   };
 
   const handleNextDialogue = () => {
     if (currentDialogueIndex < dialogues.length - 1) {
-      setCurrentDialogueIndex((prevIndex) => prevIndex + 1);
+      setCurrentDialogueIndex((prev) => prev + 1);
     }
   };
 
-  const handleVisited = () => {
-    axios
-      .post(`${import.meta.env.VITE_APP_API_URL}/api/user/visited`, {
-        userId: userData._id,
-        field: "visitedPokeMart",
-      })
-      .then((response) => {
-        setUserData(response.data.user);
-        handleNextDialogue();
-      })
-      .catch((error) => {
-        setErrorMessage(
-          "Oops, it seems something unexpected occurred. Please take a moment to rest while I work on resolving the issue.",
-        );
-      });
+  const handleVisited = async () => {
+    try {
+      const res = await axios.post(
+        `${import.meta.env.VITE_APP_API_URL}/api/user/visited`,
+        {
+          userId: userData._id,
+          field: "visitedPokeMart",
+        },
+      );
+
+      setUserData(res.data.user);
+      handleNextDialogue();
+    } catch {
+      setErrorMessage(
+        "Oops, it seems something unexpected occurred. Please take a moment to rest while I work on resolving the issue.",
+      );
+    }
   };
 
   return (
     <div className="center-container">
       <div className="professors">
         <img draggable="false" className="joy" src={joy} alt="Joy" />
+
         {userData.visitedPokeMart ? (
           !hatching ? (
             <>
               <div className="home-container">
                 <div className="grid-btn-container">
-                  <button
-                    className={`mode-btn ${
-                      activeMode === "one-egg" ? "active-btn" : ""
-                    }`}
-                    onClick={() => {
-                      setActiveMode(activeMode === "one-egg" ? "" : "one-egg");
-                    }}
-                  >
-                    Hatch 1 Egg - 50₱
-                  </button>
-                  <button
-                    className={`mode-btn ${
-                      activeMode === "five-eggs" ? "active-btn" : ""
-                    }`}
-                    onClick={() => {
-                      setActiveMode(
-                        activeMode === "five-eggs" ? "" : "five-eggs",
-                      );
-                    }}
-                  >
-                    Hatch 5 Eggs - 250₱
-                  </button>
-                  <button
-                    className={`mode-btn ${
-                      activeMode === "ten-eggs" ? "active-btn" : ""
-                    }`}
-                    onClick={() => {
-                      setActiveMode(
-                        activeMode === "ten-eggs" ? "" : "ten-eggs",
-                      );
-                    }}
-                  >
-                    Hatch 10 Eggs - 500₱
-                  </button>
-                  <button
-                    className={`mode-btn legendary-egg ${
-                      activeMode === "one-legendary-egg" ? "active-btn" : ""
-                    }`}
-                    onClick={() => {
-                      setActiveMode(
-                        activeMode === "one-legendary-egg"
-                          ? ""
-                          : "one-legendary-egg",
-                      );
-                    }}
-                  >
-                    Hatch 1 Legendary Egg - 2000₱
-                  </button>
-                  <button
-                    className={`mode-btn mythical-egg ${
-                      activeMode === "one-mythical-egg" ? "active-btn" : ""
-                    }`}
-                    onClick={() => {
-                      setActiveMode(
-                        activeMode === "one-mythical-egg"
-                          ? ""
-                          : "one-mythical-egg",
-                      );
-                    }}
-                  >
-                    Hatch 1 Mythical Egg - 8000₱
-                  </button>
-                </div>
-                <>
-                  <div className="home-text-container">
-                    <p>
-                      <span className="joy">JOY: </span>
-                      {activeMode
-                        ? eggOptionDialogue[activeMode]
-                        : "Welcome to the PokéMart! How may I assist you today?"}
-                    </p>
-                  </div>
-                  {activeMode ? (
+                  {Object.keys(eggOptionPrice).map((mode) => (
                     <button
-                      className="home-btn next-sm"
-                      onClick={handleHatch}
-                      disabled={userData.pokecoins < eggOptionPrice[activeMode]}
-                    >
-                      Hatch
-                    </button>
-                  ) : (
-                    <p></p>
-                  )}
-                </>
-              </div>
-            </>
-          ) : (
-            hatchedPokemonList && (
-              // Hatching
-              <div className="home-container">
-                <div className="grid-btn-container center-grid">
-                  {hatchedPokemonList.map((pokemon) => (
-                    <button
-                      key={pokemon._id}
-                      className={`mode-btn capitalize ${
-                        activeMode === "one-legendary-egg"
+                      key={mode}
+                      className={`mode-btn ${
+                        mode.includes("legendary")
                           ? "legendary-egg"
-                          : activeMode === "one-mythical-egg"
+                          : mode.includes("mythical")
                             ? "mythical-egg"
                             : ""
-                      }`}
-                      onClick={() => {
-                        setActiveMode(
-                          activeMode === "one-egg" ? "" : "one-egg",
-                        );
-                      }}
+                      } ${activeMode === mode ? "active-btn" : ""}`}
+                      onClick={() =>
+                        setActiveMode(activeMode === mode ? "" : mode)
+                      }
                     >
-                      {pokemon.name}
+                      {mode === "one-egg" && "Hatch 1 Egg - 50₱"}
+                      {mode === "five-eggs" && "Hatch 5 Eggs - 250₱"}
+                      {mode === "ten-eggs" && "Hatch 10 Eggs - 500₱"}
+                      {mode === "one-legendary-egg" &&
+                        "Hatch 1 Legendary Egg - 2000₱"}
+                      {mode === "one-mythical-egg" &&
+                        "Hatch 1 Mythical Egg - 8000₱"}
                     </button>
                   ))}
                 </div>
+
                 <div className="home-text-container">
-                  <p className="dialogue">
+                  <p>
                     <span className="joy">JOY: </span>
-                    {hatchedPokemonList.length === 1
-                      ? "Congratulations, Trainer! Your Pokémon has hatched and is eager to explore the world by your side! You can now check it out in your Pokédex."
-                      : "Congratulations, Trainer! Your Pokémons have hatched and are eager to explore the world by your side! You ca now check them out in your Pokédex."}
+                    {activeMode
+                      ? eggOptionDialogue[activeMode]
+                      : "Welcome to the PokéMart! How may I assist you today?"}
                   </p>
-                  {currentDialogueIndex === dialogues.length - 1 && (
-                    <div className="name-input-container">
-                      {errorMessage && (
-                        <p className="dialogue">
-                          <span className="joy">JOY: </span>
-                          {errorMessage}
-                        </p>
-                      )}
-                    </div>
-                  )}
                 </div>
-                <div className="grid-btn-container">
+
+                {activeMode && (
                   <button
-                    className="home-btn next"
-                    onClick={() => {
-                      setActiveMode("");
-                      setHatching(false);
-                    }}
+                    className="home-btn next-sm"
+                    onClick={handleHatch}
+                    disabled={userData.pokecoins < eggOptionPrice[activeMode]}
                   >
-                    Shop More
+                    Hatch
                   </button>
-                  <Link className="btn-container" to="/">
-                    <button className="home-btn next">Leave</button>
-                  </Link>
-                </div>
+                )}
               </div>
-            )
-          )
-        ) : (
-          <>
+            </>
+          ) : (
             <div className="home-container">
+              <div className="grid-btn-container center-grid">
+                {hatchedPokemonList.map((pokemon) => (
+                  <button
+                    key={pokemon._id}
+                    className={`mode-btn capitalize ${
+                      activeMode === "one-legendary-egg"
+                        ? "legendary-egg"
+                        : activeMode === "one-mythical-egg"
+                          ? "mythical-egg"
+                          : ""
+                    }`}
+                  >
+                    {pokemon.name}
+                  </button>
+                ))}
+              </div>
+
               <div className="home-text-container">
                 <p className="dialogue">
                   <span className="joy">JOY: </span>
-                  {dialogues[currentDialogueIndex].dialogue}
+                  {hatchedPokemonList.length === 1
+                    ? "Congratulations, Trainer! Your Pokémon has hatched and is eager to explore the world by your side! You can now check it out in your Pokédex."
+                    : "Congratulations, Trainer! Your Pokémons have hatched and are eager to explore the world by your side! You ca now check them out in your Pokédex."}
                 </p>
-                {currentDialogueIndex === dialogues.length - 1 && (
-                  <div className="name-input-container">
-                    {errorMessage && (
-                      <p className="dialogue">
-                        <span className="joy">JOY: </span>
-                        {errorMessage}
-                      </p>
-                    )}
-                  </div>
+
+                {errorMessage && (
+                  <p className="dialogue">
+                    <span className="joy">JOY: </span>
+                    {errorMessage}
+                  </p>
                 )}
               </div>
-              {currentDialogueIndex < dialogues.length - 1 ? (
+
+              <div className="grid-btn-container">
                 <button
-                  className="home-btn next-sm"
-                  onClick={handleNextDialogue}
+                  className="home-btn next"
+                  onClick={() => {
+                    setActiveMode("");
+                    setHatching(false);
+                    setHatchedPokemonList([]);
+                  }}
                 >
-                  Next
+                  Shop More
                 </button>
-              ) : (
-                <button className="home-btn next-sm" onClick={handleVisited}>
-                  Start Shopping
-                </button>
-              )}
+
+                <Link className="btn-container" to="/">
+                  <button className="home-btn next">Leave</button>
+                </Link>
+              </div>
             </div>
-          </>
+          )
+        ) : (
+          <div className="home-container">
+            <div className="home-text-container">
+              <p className="dialogue">
+                <span className="joy">JOY: </span>
+                {dialogues[currentDialogueIndex].dialogue}
+              </p>
+            </div>
+
+            {currentDialogueIndex < dialogues.length - 1 ? (
+              <button className="home-btn next-sm" onClick={handleNextDialogue}>
+                Next
+              </button>
+            ) : (
+              <button className="home-btn next-sm" onClick={handleVisited}>
+                Start Shopping
+              </button>
+            )}
+          </div>
         )}
       </div>
     </div>
