@@ -45,7 +45,7 @@ function PlayModes({ userData, setUserData }) {
     "whos-that-pokemon":
       "Try to identify the hidden Pokémon from its silhouette in this classic guessing game!",
     "scramble-surge":
-      "Unscramble the names of 5 Pokémon before time runs out in this word scramble challenge!",
+      "Unscramble the names of 10 Pokémon before time runs out in this word scramble challenge!",
     "type-matchup":
       "(Coming Soon) Match Pokémon with their corresponding types in this exciting test of knowledge and strategy!",
   };
@@ -58,11 +58,9 @@ function PlayModes({ userData, setUserData }) {
 
   const handleVisited = () => {
     axios
-      .post(`${import.meta.env.VITE_APP_API_URL}/api/update-user`, {
-        email: userData.email,
-        updates: {
-          visitedPlayModes: true,
-        },
+      .post(`${import.meta.env.VITE_APP_API_URL}/api/user/visited`, {
+        userId: userData._id,
+        field: "visitedPlayModes",
       })
       .then((response) => {
         setUserData(response.data.user);
@@ -70,7 +68,7 @@ function PlayModes({ userData, setUserData }) {
       })
       .catch((error) => {
         setErrorMessage(
-          "Oh dear, it looks like something went wrong. Why don't you take a little break while I figure out what happened and fix it?"
+          "Oh dear, it looks like something went wrong. Why don't you take a little break while I figure out what happened and fix it?",
         );
       });
   };
@@ -89,7 +87,7 @@ function PlayModes({ userData, setUserData }) {
                   }`}
                   onClick={() => {
                     setActiveMode(
-                      activeMode === "poke-quiz" ? "" : "poke-quiz"
+                      activeMode === "poke-quiz" ? "" : "poke-quiz",
                     );
                     setDisabledMode(false);
                   }}
@@ -104,7 +102,7 @@ function PlayModes({ userData, setUserData }) {
                     setActiveMode(
                       activeMode === "whos-that-pokemon"
                         ? ""
-                        : "whos-that-pokemon"
+                        : "whos-that-pokemon",
                     );
                     setDisabledMode(false);
                   }}
@@ -117,7 +115,7 @@ function PlayModes({ userData, setUserData }) {
                   }`}
                   onClick={() => {
                     setActiveMode(
-                      activeMode === "scramble-surge" ? "" : "scramble-surge"
+                      activeMode === "scramble-surge" ? "" : "scramble-surge",
                     );
                     setDisabledMode(false);
                   }}

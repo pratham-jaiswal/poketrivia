@@ -5,8 +5,9 @@ import axios from "axios";
 function WhosThatPokemon({ userData, setUserData }) {
   const [currentQuestionIndex, setQuestionIndex] = useState(0);
   const [optionChoice, setOptionChoice] = useState("");
-  const [pokemons, setPokemons] = useState([]);
   const [pokemonImageUrls, setPokemonImageUrls] = useState([]);
+  const [sessionId, setSessionId] = useState("");
+
   const [quizComplete, setQuizComplete] = useState(false);
   const [score, setScore] = useState(0);
   const [scoreDialogue, setScoreDialogue] = useState();
@@ -14,92 +15,75 @@ function WhosThatPokemon({ userData, setUserData }) {
 
   useEffect(() => {
     axios
-      .get(`${import.meta.env.VITE_APP_API_URL}/api/pokemons`)
-      .then((response) => {
-        setPokemons(response.data);
+      .post(`${import.meta.env.VITE_APP_API_URL}/api/game/start`, {
+        type: "image",
+        userId: userData._id,
       })
-      .catch((error) => {
-        console.error("Error sending user data to backend:", error);
-      });
+      .then((response) => {
+        setPokemonImageUrls(
+          response.data.questions.map((q) => ({
+            ...q,
+            selected: "",
+          })),
+        );
+        setSessionId(response.data.sessionId);
+      })
+      .catch(console.error);
   }, []);
 
-  useEffect(() => {
-    const generateOptions = (imageUrl, correctPokemon) => {
-      const incorrectPokemons = pokemons.filter(
-        (pokemon) => pokemon.name !== correctPokemon
-      );
-
-      const incorrectOptions = [];
-      while (incorrectOptions.length < 3) {
-        const randomPokemon =
-          incorrectPokemons[
-            Math.floor(Math.random() * incorrectPokemons.length)
-          ];
-        incorrectOptions.push(randomPokemon.name);
-      }
-
-      const options = [correctPokemon, ...incorrectOptions];
-      options.sort(() => Math.random() - 0.5);
-      return options;
-    };
-
-    if (pokemons.length > 0) {
-      const tempImageUrls = [];
-      pokemons.forEach((pokemon) => {
-        tempImageUrls.push({
-          imageUrl: pokemon.frontSpriteUrl,
-          pokemon: pokemon.name,
-        });
-      });
-
-      tempImageUrls.sort(() => Math.random() - 0.5);
-
-      const pokemonImageUrlsSet = new Set();
-      const pokemonImageUrlsArray = [];
-      for (const { imageUrl, pokemon } of tempImageUrls) {
-        if (!pokemonImageUrlsSet.has(imageUrl)) {
-          pokemonImageUrlsSet.add(imageUrl);
-          const options = generateOptions(imageUrl, pokemon);
-          pokemonImageUrlsArray.push({ imageUrl, pokemon, options, selected: "" });
-        }
-        if (pokemonImageUrlsArray.length === 10) break;
-      }
-      setPokemonImageUrls(pokemonImageUrlsArray);
-    }
-  }, [pokemons]);
-
   const handleConfirmClick = (type) => {
-    const updatedImageUrls = [...pokemonImageUrls];
+    const updated = [...pokemonImageUrls];
+
     if (optionChoice) {
-      updatedImageUrls[currentQuestionIndex].selected = optionChoice;
+      updated[currentQuestionIndex].selected = optionChoice;
     }
-    setPokemonImageUrls(updatedImageUrls);
+
+    setPokemonImageUrls(updated);
+
     if (type === "next") {
       setQuestionIndex(
-        currentQuestionIndex < pokemonImageUrls.length - 1
+        currentQuestionIndex < updated.length - 1
           ? currentQuestionIndex + 1
-          : pokemonImageUrls.length - 1
+          : updated.length - 1,
       );
     } else if (type === "previous") {
       setQuestionIndex(currentQuestionIndex > 0 ? currentQuestionIndex - 1 : 0);
     } else if (type === "confirm") {
-      let totalScore = 0;
-      updatedImageUrls.forEach((imageUrl) => {
-        if (imageUrl.pokemon === imageUrl.selected) {
-          totalScore += 1;
-        }
-      });
-      setQuizComplete(true);
-      setScore(totalScore);
+      submitQuiz(updated);
     }
+
     setOptionChoice("");
   };
 
   const handleOptionClick = (option) => {
-    const updatedImageUrls = [...pokemonImageUrls];
-    updatedImageUrls[currentQuestionIndex].selected = "";
-    setPokemonImageUrls(updatedImageUrls);
+    const updated = [...pokemonImageUrls];
+    updated[currentQuestionIndex].selected = "";
+    setPokemonImageUrls(updated);
     setOptionChoice(option);
+  };
+
+  const submitQuiz = async (updated) => {
+    try {
+      const answers = updated.map((q) => ({
+        questionId: q.questionId,
+        selected: q.selected,
+      }));
+
+      const res = await axios.post(
+        `${import.meta.env.VITE_APP_API_URL}/api/game/submit`,
+        {
+          sessionId,
+          answers,
+          userId: userData._id,
+        },
+      );
+
+      setScore(res.data.score);
+      setUserData(res.data.user);
+      setQuizComplete(true);
+    } catch (err) {
+      setErrorMessage("");
+    }
   };
 
   useEffect(() => {
@@ -126,51 +110,27 @@ function WhosThatPokemon({ userData, setUserData }) {
             "No worries! Even the greatest trainers started somewhere. Keep going!",
         },
       ];
+
       let i = 0;
-      if (score === 10) {
-        i = 0;
-      } else if (score >= 8) {
-        i = 1;
-      } else if (score >= 6) {
-        i = 2;
-      } else if (score >= 4) {
-        i = 3;
-      } else {
-        i = 4;
-      }
+      if (score === 10) i = 0;
+      else if (score >= 8) i = 1;
+      else if (score >= 6) i = 2;
+      else if (score >= 4) i = 3;
+      else i = 4;
+
       setScoreDialogue(dialogues[i]);
     }
   }, [quizComplete, score]);
 
   const completeQuiz = () => {
-    axios
-      .post(`${import.meta.env.VITE_APP_API_URL}/api/update-user`, {
-        email: userData.email,
-        updates: {
-          totalScore: parseInt(userData.totalScore) + parseInt(score) * 2,
-          pokecoins: parseInt(userData.pokecoins) + parseInt(score) * 4,
-        },
-      })
-      .then((response) => {
-        setUserData(response.data.user);
-      })
-      .then(() => {
-        window.location.href = "/";
-      })
-      .catch((error) => {
-        setErrorMessage("");
-      });
+    window.location.href = "/";
   };
 
   return (
     <div className="center-container">
       <div className="professors wtp-container">
-        <img
-          draggable="false"
-          className="dawn"
-          src={dawn}
-          alt="Dawn"
-        />
+        <img draggable="false" className="dawn" src={dawn} alt="Dawn" />
+
         {pokemonImageUrls.length > 0 && (
           <>
             {!quizComplete ? (
@@ -181,83 +141,34 @@ function WhosThatPokemon({ userData, setUserData }) {
                     pokemon
                   </p>
                   <p className="pkmn-holder">
-                    <img className="wtp-pokemon" src={pokemonImageUrls[currentQuestionIndex]?.imageUrl} alt="pokemon" />
+                    <img
+                      className="wtp-pokemon"
+                      src={pokemonImageUrls[currentQuestionIndex]?.question}
+                      alt="pokemon"
+                    />
                   </p>
                 </div>
+
                 <div className="grid-btn-container">
-                  <button
-                    className={`trivia-option ${
-                      optionChoice ===
-                      pokemonImageUrls[currentQuestionIndex]?.options[0]
-                        ? "active-btn"
-                        : pokemonImageUrls[currentQuestionIndex]?.selected ===
-                          pokemonImageUrls[currentQuestionIndex]?.options[0]
-                        ? "active-btn"
-                        : ""
-                    }`}
-                    onClick={() => {
-                      handleOptionClick(
-                        pokemonImageUrls[currentQuestionIndex]?.options[0]
-                      );
-                    }}
-                  >
-                    {pokemonImageUrls[currentQuestionIndex]?.options[0]}
-                  </button>
-                  <button
-                    className={`trivia-option ${
-                      optionChoice ===
-                      pokemonImageUrls[currentQuestionIndex]?.options[1]
-                        ? "active-btn"
-                        : pokemonImageUrls[currentQuestionIndex]?.selected ===
-                          pokemonImageUrls[currentQuestionIndex]?.options[1]
-                        ? "active-btn"
-                        : ""
-                    }`}
-                    onClick={() => {
-                      handleOptionClick(
-                        pokemonImageUrls[currentQuestionIndex]?.options[1]
-                      );
-                    }}
-                  >
-                    {pokemonImageUrls[currentQuestionIndex]?.options[1]}
-                  </button>
-                  <button
-                    className={`trivia-option ${
-                      optionChoice ===
-                      pokemonImageUrls[currentQuestionIndex]?.options[2]
-                        ? "active-btn"
-                        : pokemonImageUrls[currentQuestionIndex]?.selected ===
-                          pokemonImageUrls[currentQuestionIndex]?.options[2]
-                        ? "active-btn"
-                        : ""
-                    }`}
-                    onClick={() => {
-                      handleOptionClick(
-                        pokemonImageUrls[currentQuestionIndex]?.options[2]
-                      );
-                    }}
-                  >
-                    {pokemonImageUrls[currentQuestionIndex]?.options[2]}
-                  </button>
-                  <button
-                    className={`trivia-option ${
-                      optionChoice ===
-                      pokemonImageUrls[currentQuestionIndex]?.options[3]
-                        ? "active-btn"
-                        : pokemonImageUrls[currentQuestionIndex]?.selected ===
-                          pokemonImageUrls[currentQuestionIndex]?.options[3]
-                        ? "active-btn"
-                        : ""
-                    }`}
-                    onClick={() => {
-                      handleOptionClick(
-                        pokemonImageUrls[currentQuestionIndex]?.options[3]
-                      );
-                    }}
-                  >
-                    {pokemonImageUrls[currentQuestionIndex]?.options[3]}
-                  </button>
+                  {pokemonImageUrls[currentQuestionIndex]?.options.map(
+                    (opt, i) => (
+                      <button
+                        key={i}
+                        className={`trivia-option ${
+                          optionChoice === opt ||
+                          pokemonImageUrls[currentQuestionIndex]?.selected ===
+                            opt
+                            ? "active-btn"
+                            : ""
+                        }`}
+                        onClick={() => handleOptionClick(opt)}
+                      >
+                        {opt}
+                      </button>
+                    ),
+                  )}
                 </div>
+
                 <div className="grid-btn-container">
                   <button
                     className="home-btn next"
@@ -266,6 +177,7 @@ function WhosThatPokemon({ userData, setUserData }) {
                   >
                     Previous
                   </button>
+
                   {currentQuestionIndex < pokemonImageUrls.length - 1 ? (
                     <button
                       className="home-btn next"
@@ -301,8 +213,8 @@ function WhosThatPokemon({ userData, setUserData }) {
                   <>
                     <div className="home-text-container">
                       <p>
-                        <span className="dawn">DAWN: </span>You've completed
-                        the quiz with a score of {score}/10
+                        <span className="dawn">DAWN: </span>You've completed the
+                        quiz with a score of {score}/10
                       </p>
                       <p>
                         <span className="dawn">DAWN: </span>

@@ -9,7 +9,10 @@ function PokeMart({ userData, setUserData }) {
   const [errorMessage, setErrorMessage] = useState("");
   const [hatching, setHatching] = useState(false);
   const [pokemons, setPokemons] = useState([]);
-  const [ownedNonLegendaryMythicalPokemons, setOwnedNonLegendaryMythicalPokemons] = useState([]);
+  const [
+    ownedNonLegendaryMythicalPokemons,
+    setOwnedNonLegendaryMythicalPokemons,
+  ] = useState([]);
   const [ownedMythicalPokemons, setOwnedMythicalPokemons] = useState([]);
   const [ownedLegendaryPokemons, setOwnedLegendaryPokemons] = useState([]);
   const [hatchedPokemonList, setHatchedPokemonList] = useState([]);
@@ -48,7 +51,7 @@ function PokeMart({ userData, setUserData }) {
     (pokemonId) => {
       return userData.pokemons.some((pokemon) => pokemon.pokemon === pokemonId);
     },
-    [userData.pokemons]
+    [userData.pokemons],
   );
 
   useEffect(() => {
@@ -66,7 +69,7 @@ function PokeMart({ userData, setUserData }) {
     const owned = pokemons.filter((pokemon) => isPokemonOwned(pokemon._id));
 
     const ownedNonLegendaryMythical = owned.filter(
-      (pokemon) => !pokemon.isLegendary && !pokemon.isMythical
+      (pokemon) => !pokemon.isLegendary && !pokemon.isMythical,
     );
     setOwnedNonLegendaryMythicalPokemons(ownedNonLegendaryMythical);
 
@@ -80,7 +83,7 @@ function PokeMart({ userData, setUserData }) {
   const filterOwnedPokemons = (pokemons, owned) => {
     return pokemons.filter(
       (pokemon) =>
-        !owned.some((ownedPokemon) => ownedPokemon._id === pokemon._id)
+        !owned.some((ownedPokemon) => ownedPokemon._id === pokemon._id),
     );
   };
 
@@ -92,19 +95,19 @@ function PokeMart({ userData, setUserData }) {
       case "ten-eggs":
         notOwnedPokemons = filterOwnedPokemons(
           pokemons,
-          ownedNonLegendaryMythicalPokemons
+          ownedNonLegendaryMythicalPokemons,
         );
         break;
       case "one-legendary-egg":
         notOwnedPokemons = filterOwnedPokemons(
           pokemons.filter((pokemon) => pokemon.isLegendary),
-          ownedLegendaryPokemons
+          ownedLegendaryPokemons,
         );
         break;
       case "one-mythical-egg":
         notOwnedPokemons = filterOwnedPokemons(
           pokemons.filter((pokemon) => pokemon.isMythical),
-          ownedMythicalPokemons
+          ownedMythicalPokemons,
         );
         break;
       default:
@@ -118,7 +121,7 @@ function PokeMart({ userData, setUserData }) {
     const notOwnedPokemons = getNotOwnedPokemons(activeMode);
     const hatchedPokemons = shuffleArray(notOwnedPokemons).slice(
       0,
-      getHatchQuantity(activeMode)
+      getHatchQuantity(activeMode),
     );
     setHatchedPokemonList(hatchedPokemons);
 
@@ -138,7 +141,7 @@ function PokeMart({ userData, setUserData }) {
       })
       .catch((error) => {
         setErrorMessage(
-          "Oops, it seems something unexpected occurred. Please take a moment to rest while I work on resolving the issue."
+          "Oops, it seems something unexpected occurred. Please take a moment to rest while I work on resolving the issue.",
         );
         setHatching(false);
       });
@@ -180,11 +183,9 @@ function PokeMart({ userData, setUserData }) {
 
   const handleVisited = () => {
     axios
-      .post(`${import.meta.env.VITE_APP_API_URL}/api/update-user`, {
-        email: userData.email,
-        updates: {
-          visitedPokeMart: true,
-        },
+      .post(`${import.meta.env.VITE_APP_API_URL}/api/user/visited`, {
+        userId: userData._id,
+        field: "visitedPokeMart",
       })
       .then((response) => {
         setUserData(response.data.user);
@@ -192,7 +193,7 @@ function PokeMart({ userData, setUserData }) {
       })
       .catch((error) => {
         setErrorMessage(
-          "Oops, it seems something unexpected occurred. Please take a moment to rest while I work on resolving the issue."
+          "Oops, it seems something unexpected occurred. Please take a moment to rest while I work on resolving the issue.",
         );
       });
   };
@@ -222,7 +223,7 @@ function PokeMart({ userData, setUserData }) {
                     }`}
                     onClick={() => {
                       setActiveMode(
-                        activeMode === "five-eggs" ? "" : "five-eggs"
+                        activeMode === "five-eggs" ? "" : "five-eggs",
                       );
                     }}
                   >
@@ -234,7 +235,7 @@ function PokeMart({ userData, setUserData }) {
                     }`}
                     onClick={() => {
                       setActiveMode(
-                        activeMode === "ten-eggs" ? "" : "ten-eggs"
+                        activeMode === "ten-eggs" ? "" : "ten-eggs",
                       );
                     }}
                   >
@@ -248,7 +249,7 @@ function PokeMart({ userData, setUserData }) {
                       setActiveMode(
                         activeMode === "one-legendary-egg"
                           ? ""
-                          : "one-legendary-egg"
+                          : "one-legendary-egg",
                       );
                     }}
                   >
@@ -262,7 +263,7 @@ function PokeMart({ userData, setUserData }) {
                       setActiveMode(
                         activeMode === "one-mythical-egg"
                           ? ""
-                          : "one-mythical-egg"
+                          : "one-mythical-egg",
                       );
                     }}
                   >
@@ -304,12 +305,12 @@ function PokeMart({ userData, setUserData }) {
                         activeMode === "one-legendary-egg"
                           ? "legendary-egg"
                           : activeMode === "one-mythical-egg"
-                          ? "mythical-egg"
-                          : ""
+                            ? "mythical-egg"
+                            : ""
                       }`}
                       onClick={() => {
                         setActiveMode(
-                          activeMode === "one-egg" ? "" : "one-egg"
+                          activeMode === "one-egg" ? "" : "one-egg",
                         );
                       }}
                     >
