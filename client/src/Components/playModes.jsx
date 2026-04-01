@@ -3,7 +3,7 @@ import { useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 
-function PlayModes({ userData, setUserData }) {
+function PlayModes({ userData, setUserData, getAccessTokenSilently }) {
   const [currentDialogueIndex, setCurrentDialogueIndex] = useState(0);
   const [disabledMode, setDisabledMode] = useState(true);
   const [activeMode, setActiveMode] = useState("");
@@ -56,12 +56,21 @@ function PlayModes({ userData, setUserData }) {
     }
   };
 
-  const handleVisited = () => {
+  const handleVisited = async () => {
+    const token = await getAccessTokenSilently();
     axios
-      .post(`${import.meta.env.VITE_APP_API_URL}/api/user/visited`, {
-        userId: userData._id,
-        field: "visitedPlayModes",
-      })
+      .post(
+        `${import.meta.env.VITE_APP_API_URL}/api/user/visited`,
+        {
+          userId: userData._id,
+          field: "visitedPlayModes",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      )
       .then((response) => {
         setUserData(response.data.user);
         handleNextDialogue();

@@ -3,7 +3,7 @@ import { useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 
-function PokeMart({ userData, setUserData }) {
+function PokeMart({ userData, setUserData, getAccessTokenSilently }) {
   const [currentDialogueIndex, setCurrentDialogueIndex] = useState(0);
   const [activeMode, setActiveMode] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -43,12 +43,17 @@ function PokeMart({ userData, setUserData }) {
   const handleHatch = async () => {
     try {
       setHatching(true);
-
+      const token = await getAccessTokenSilently();
       const res = await axios.post(
         `${import.meta.env.VITE_APP_API_URL}/api/pokemart/hatch`,
         {
           userId: userData._id,
           mode: activeMode,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
       );
 
@@ -70,11 +75,17 @@ function PokeMart({ userData, setUserData }) {
 
   const handleVisited = async () => {
     try {
+      const token = await getAccessTokenSilently();
       const res = await axios.post(
         `${import.meta.env.VITE_APP_API_URL}/api/user/visited`,
         {
           userId: userData._id,
           field: "visitedPokeMart",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
       );
 

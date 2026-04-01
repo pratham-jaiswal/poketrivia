@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import Card from "./card";
-import { NotAuthenticatedComponent } from "../App";
 
-function Pokedex({ userData }) {
+function Pokedex({ userData, getAccessTokenSilently }) {
   const [pokemons, setPokemons] = useState([]);
   const [option, setOption] = useState("all");
   const [ownCategory, setOwnCategory] = useState("all");
@@ -15,6 +14,7 @@ function Pokedex({ userData }) {
   const observerRef = useRef(null);
 
   useEffect(() => {
+    if (!hasNext) return;
     fetchPokemons();
   }, [offset]);
 
@@ -40,16 +40,22 @@ function Pokedex({ userData }) {
       if (userData) {
         params.userId = userData._id;
       }
-
+      const token = await getAccessTokenSilently();
       const res = await axios.get(
         `${import.meta.env.VITE_APP_API_URL}/api/pokemons`,
-        { params },
+        {
+          params,
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
       );
 
       setPokemons((prev) => [...prev, ...res.data.data]);
       setHasNext(res.data.pagination.hasNext);
     } catch (err) {
       console.error("Error fetching pokemons:", err);
+      setHasNext(false);
     } finally {
       setLoading(false);
     }
@@ -62,7 +68,7 @@ function Pokedex({ userData }) {
     if (observerRef.current) observerRef.current.disconnect();
 
     observerRef.current = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting && hasNext) {
+      if (entries[0].isIntersecting && hasNext && !loading) {
         setOffset((prev) => prev + 1);
       }
     });
@@ -118,12 +124,6 @@ function Pokedex({ userData }) {
           >
             Mythical
           </button>
-        </div>
-      )}
-
-      {option === "owned" && !userData && (
-        <div style={{ width: "100%" }}>
-          <NotAuthenticatedComponent message="You must be logged in to view your pokemons." />
         </div>
       )}
 

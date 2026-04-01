@@ -2,9 +2,17 @@ import oak from "../Images/Characters/oak.png";
 import juniper from "../Images/Characters/juniper.png";
 import { useState } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
-function Home({ isAuthenticated, userData, setUserData, userEmail }) {
+function Home({
+  isAuthenticated,
+  userData,
+  setUserData,
+  userEmail,
+  getAccessTokenSilently,
+}) {
+  const navigate = useNavigate();
+
   const [currentDialogueIndex, setCurrentDialogueIndex] = useState(0);
   const [username, setUsername] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -80,19 +88,28 @@ function Home({ isAuthenticated, userData, setUserData, userEmail }) {
     }
   };
 
-  const handleNameConfirmation = () => {
+  const handleNameConfirmation = async () => {
+    const token = await getAccessTokenSilently();
     axios
-      .post(`${import.meta.env.VITE_APP_API_URL}/api/new-user`, {
-        username,
-        email: userEmail,
-      })
+      .post(
+        `${import.meta.env.VITE_APP_API_URL}/api/new-user`,
+        {
+          username,
+          email: userEmail,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      )
       .then((response) => {
         setUserData(response.data.user);
         handleNextDialogue();
       })
       .catch((error) => {
         setErrorMessage(
-          "This name is already taken by another user. Try another name."
+          "This name is already taken by another user. Try another name.",
         );
       });
   };
@@ -123,14 +140,10 @@ function Home({ isAuthenticated, userData, setUserData, userEmail }) {
                 </div>
                 <div className="home-btn-container">
                   <Link className="btn-container" to="/play-modes">
-                    <button className="home-btn">
-                      Play
-                    </button>
+                    <button className="home-btn">Play</button>
                   </Link>
                   <Link className="btn-container" to="/pokemart">
-                    <button className="home-btn">
-                      PokéMart
-                    </button>
+                    <button className="home-btn">PokéMart</button>
                   </Link>
                   {/* <Link className="btn-container" to="/">
                     <button className="home-btn" disabled>
@@ -138,9 +151,7 @@ function Home({ isAuthenticated, userData, setUserData, userEmail }) {
                     </button>
                   </Link> */}
                   <Link className="btn-container" to="/pokedex">
-                    <button className="home-btn">
-                      Pokédex
-                    </button>
+                    <button className="home-btn">Pokédex</button>
                   </Link>
                 </div>
               </div>
@@ -193,10 +204,7 @@ function Home({ isAuthenticated, userData, setUserData, userEmail }) {
                     Next
                   </button>
                 ) : (
-                  <button
-                    className="home-btn"
-                    onClick={() => window.location.reload()}
-                  >
+                  <button className="home-btn" onClick={() => navigate(0)}>
                     Wake Up!
                   </button>
                 )}

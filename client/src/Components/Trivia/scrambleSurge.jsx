@@ -1,8 +1,11 @@
 import brock from "../../Images/Characters/brock.png";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
-function ScrambleSurge({ userData, setUserData }) {
+function ScrambleSurge({ userData, setUserData, getAccessTokenSilently }) {
+  const navigate = useNavigate();
+
   const [currentQuestionIndex, setQuestionIndex] = useState(0);
   const [optionChoice, setOptionChoice] = useState("");
   const [pokemonScrambledNameList, setpokemonScrambledNameList] = useState([]);
@@ -14,21 +17,34 @@ function ScrambleSurge({ userData, setUserData }) {
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    axios
-      .post(`${import.meta.env.VITE_APP_API_URL}/api/game/start`, {
-        type: "scramble",
-        userId: userData._id,
-      })
-      .then((response) => {
-        setpokemonScrambledNameList(
-          response.data.questions.map((q) => ({
-            ...q,
-            selected: "",
-          })),
-        );
-        setSessionId(response.data.sessionId);
-      })
-      .catch(console.error);
+    const startGame = async () => {
+      const token = await getAccessTokenSilently();
+      axios
+        .post(
+          `${import.meta.env.VITE_APP_API_URL}/api/game/start`,
+          {
+            type: "scramble",
+            userId: userData._id,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        )
+        .then((response) => {
+          setpokemonScrambledNameList(
+            response.data.questions.map((q) => ({
+              ...q,
+              selected: "",
+            })),
+          );
+          setSessionId(response.data.sessionId);
+        })
+        .catch(console.error);
+    };
+
+    startGame();
   }, []);
 
   const handleConfirmClick = (type) => {
@@ -56,9 +72,9 @@ function ScrambleSurge({ userData, setUserData }) {
   };
 
   const handleOptionClick = (option) => {
-    const updatedList = [...pokemonScrambledNameList];
-    updatedList[currentQuestionIndex].selected = "";
-    setpokemonScrambledNameList(updatedList);
+    // const updatedList = [...pokemonScrambledNameList];
+    // updatedList[currentQuestionIndex].selected = "";
+    // setpokemonScrambledNameList(updatedList);
     setOptionChoice(option);
   };
 
@@ -68,7 +84,7 @@ function ScrambleSurge({ userData, setUserData }) {
         questionId: q.questionId,
         selected: q.selected,
       }));
-
+      const token = await getAccessTokenSilently();
       const res = await axios.post(
         `${import.meta.env.VITE_APP_API_URL}/api/game/submit`,
         {
@@ -76,13 +92,19 @@ function ScrambleSurge({ userData, setUserData }) {
           answers,
           userId: userData._id,
         },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
       );
 
       setScore(res.data.score);
       setUserData(res.data.user);
       setQuizComplete(true);
     } catch (err) {
-      setErrorMessage("");
+      console.error(err);
+      setErrorMessage("Failed to submit quiz. Try again.");
     }
   };
 
@@ -123,7 +145,7 @@ function ScrambleSurge({ userData, setUserData }) {
   }, [quizComplete, score]);
 
   const completeQuiz = () => {
-    window.location.href = "/";
+    navigate("/");
   };
 
   return (

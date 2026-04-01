@@ -1,8 +1,11 @@
 import kukui from "../../Images/Characters/kukui.png";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
-function PokeQuiz({ userData, setUserData }) {
+function PokeQuiz({ userData, setUserData, getAccessTokenSilently }) {
+  const navigate = useNavigate();
+
   const [currentQuestionIndex, setQuestionIndex] = useState(0);
   const [optionChoice, setOptionChoice] = useState("");
   const [questions, setQuestions] = useState([]);
@@ -14,23 +17,36 @@ function PokeQuiz({ userData, setUserData }) {
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    axios
-      .post(`${import.meta.env.VITE_APP_API_URL}/api/game/start`, {
-        type: "fact",
-        userId: userData._id,
-      })
-      .then((response) => {
-        setQuestions(
-          response.data.questions.map((q) => ({
-            ...q,
-            selected: "",
-          })),
-        );
-        setSessionId(response.data.sessionId);
-      })
-      .catch((error) => {
-        console.error("Error starting game:", error);
-      });
+    const startGame = async () => {
+      const token = await getAccessTokenSilently();
+      axios
+        .post(
+          `${import.meta.env.VITE_APP_API_URL}/api/game/start`,
+          {
+            type: "fact",
+            userId: userData._id,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        )
+        .then((response) => {
+          setQuestions(
+            response.data.questions.map((q) => ({
+              ...q,
+              selected: "",
+            })),
+          );
+          setSessionId(response.data.sessionId);
+        })
+        .catch((error) => {
+          console.error("Error starting game:", error);
+        });
+    };
+
+    startGame();
   }, []);
 
   const handleConfirmClick = (type) => {
@@ -58,9 +74,9 @@ function PokeQuiz({ userData, setUserData }) {
   };
 
   const handleOptionClick = (option) => {
-    const updatedFacts = [...questions];
-    updatedFacts[currentQuestionIndex].selected = "";
-    setQuestions(updatedFacts);
+    // const updatedFacts = [...questions];
+    // updatedFacts[currentQuestionIndex].selected = "";
+    // setQuestions(updatedFacts);
     setOptionChoice(option);
   };
 
@@ -70,7 +86,7 @@ function PokeQuiz({ userData, setUserData }) {
         questionId: fact.questionId,
         selected: fact.selected,
       }));
-
+      const token = await getAccessTokenSilently();
       const response = await axios.post(
         `${import.meta.env.VITE_APP_API_URL}/api/game/submit`,
         {
@@ -78,13 +94,19 @@ function PokeQuiz({ userData, setUserData }) {
           answers,
           userId: userData._id,
         },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
       );
 
       setScore(response.data.score);
       setUserData(response.data.user);
       setQuizComplete(true);
     } catch (error) {
-      setErrorMessage("");
+      console.error(err);
+      setErrorMessage("Failed to submit quiz. Try again.");
     }
   };
 
@@ -131,7 +153,7 @@ function PokeQuiz({ userData, setUserData }) {
   }, [quizComplete, score]);
 
   const completeQuiz = () => {
-    window.location.href = "/";
+    navigate("/");
   };
 
   return (

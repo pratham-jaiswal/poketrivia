@@ -2,6 +2,7 @@ import express, { type Request, type Response } from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
+import { auth } from "express-oauth2-jwt-bearer";
 import type {
   GameType,
   Answer,
@@ -26,15 +27,21 @@ app.use(express.static("public"));
 
 app.use(
   cors({
-    origin: `${process.env.ALLOWED_URI}`,
+    origin: process.env.ALLOWED_URI,
   }),
 );
+
+const jwtCheck = auth({
+  audience: process.env.AUTH0_AUDIENCE,
+  issuerBaseURL: process.env.AUTH0_DOMAIN,
+  tokenSigningAlg: process.env.AUTH0_TOKEN_SIGN_ALGO,
+});
 
 if (mongoose.connection.readyState === 0) {
   mongoose.connect(`${process.env.MONGODB_URI}/pokemonDB`, { family: 4 });
 }
 
-app.get("/api/pokemons", async (req: Request, res: Response) => {
+app.get("/api/pokemons", jwtCheck, async (req: Request, res: Response) => {
   try {
     const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
     const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
@@ -115,7 +122,7 @@ app.get("/api/pokemons", async (req: Request, res: Response) => {
   }
 });
 
-app.post("/api/new-user", async (req: Request, res: Response) => {
+app.post("/api/new-user", jwtCheck, async (req: Request, res: Response) => {
   const { username, email } = req.body as { username: string; email: string };
 
   const existing = await User.findOne({ username });
@@ -141,13 +148,13 @@ app.post("/api/new-user", async (req: Request, res: Response) => {
   res.json({ user });
 });
 
-app.get("/api/user", async (req: Request, res: Response) => {
+app.get("/api/user", jwtCheck, async (req: Request, res: Response) => {
   const email = req.query.email as string;
   const user = await User.findOne({ email });
   res.json({ user });
 });
 
-app.post("/api/game/start", async (req: Request, res: Response) => {
+app.post("/api/game/start", jwtCheck, async (req: Request, res: Response) => {
   const { type, userId } = req.body as { type: GameType; userId: string };
 
   const recent = await GameSession.findOne({
@@ -189,7 +196,7 @@ app.post("/api/game/start", async (req: Request, res: Response) => {
   });
 });
 
-app.post("/api/game/submit", async (req: Request, res: Response) => {
+app.post("/api/game/submit", jwtCheck, async (req: Request, res: Response) => {
   const { sessionId, answers, userId } = req.body as {
     sessionId: string;
     answers: Answer[];
@@ -247,7 +254,7 @@ app.post("/api/game/submit", async (req: Request, res: Response) => {
   res.json({ score, rewards: { xp, coins }, user });
 });
 
-app.post("/api/user/visited", async (req: Request, res: Response) => {
+app.post("/api/user/visited", jwtCheck, async (req: Request, res: Response) => {
   try {
     const { userId, field } = req.body as {
       userId: string;
@@ -284,95 +291,99 @@ app.post("/api/user/visited", async (req: Request, res: Response) => {
   }
 });
 
-app.post("/api/pokemart/hatch", async (req: Request, res: Response) => {
-  try {
-    const { userId, mode } = req.body as {
-      userId: string;
-      mode: string;
-    };
+app.post(
+  "/api/pokemart/hatch",
+  jwtCheck,
+  async (req: Request, res: Response) => {
+    try {
+      const { userId, mode } = req.body as {
+        userId: string;
+        mode: string;
+      };
 
-    const priceMap: Record<string, number> = {
-      "one-egg": 50,
-      "five-eggs": 250,
-      "ten-eggs": 500,
-      "one-legendary-egg": 2000,
-      "one-mythical-egg": 8000,
-    };
+      const priceMap: Record<string, number> = {
+        "one-egg": 50,
+        "five-eggs": 250,
+        "ten-eggs": 500,
+        "one-legendary-egg": 2000,
+        "one-mythical-egg": 8000,
+      };
 
-    const quantityMap: Record<string, number> = {
-      "one-egg": 1,
-      "five-eggs": 5,
-      "ten-eggs": 10,
-      "one-legendary-egg": 1,
-      "one-mythical-egg": 1,
-    };
+      const quantityMap: Record<string, number> = {
+        "one-egg": 1,
+        "five-eggs": 5,
+        "ten-eggs": 10,
+        "one-legendary-egg": 1,
+        "one-mythical-egg": 1,
+      };
 
-    if (!priceMap[mode]) {
-      return res.status(400).json({ error: "Invalid mode" });
+      if (!priceMap[mode]) {
+        return res.status(400).json({ error: "Invalid mode" });
+      }
+
+      const user = await User.findById(userId).lean();
+      if (!user) return res.status(404).json({ error: "User not found" });
+
+      if (user.pokecoins < priceMap[mode]) {
+        return res.status(400).json({ error: "Not enough coins" });
+      }
+
+      // get owned ids
+      const ownedIds = user.pokemons.map((p) => p.pokemon.toString());
+
+      // filter pool
+      let poolQuery: any = {};
+
+      if (mode === "one-legendary-egg") {
+        poolQuery.isLegendary = true;
+      } else if (mode === "one-mythical-egg") {
+        poolQuery.isMythical = true;
+      } else {
+        poolQuery.isLegendary = false;
+        poolQuery.isMythical = false;
+      }
+
+      const pool = await Pokemon.find(poolQuery).lean();
+
+      const notOwned = pool.filter((p) => !ownedIds.includes(p._id.toString()));
+
+      if (!notOwned.length) {
+        return res.status(400).json({ error: "No Pokémon left to hatch" });
+      }
+
+      // shuffle + pick
+      const shuffled = notOwned.sort(() => Math.random() - 0.5);
+
+      const selected = shuffled.slice(0, quantityMap[mode]);
+
+      // update user
+      const updates = selected.map((p) => ({
+        pokemon: p._id,
+        count: 1,
+      }));
+
+      const updatedUser = await User.findByIdAndUpdate(
+        userId,
+        {
+          $inc: { pokecoins: -priceMap[mode] },
+          $push: { pokemons: { $each: updates } },
+        },
+        { returnDocument: "after" },
+      );
+
+      res.json({
+        hatched: selected.map((p) => ({
+          _id: p._id,
+          name: p.name,
+        })),
+        user: updatedUser,
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Hatch failed" });
     }
-
-    const user = await User.findById(userId).lean();
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    if (user.pokecoins < priceMap[mode]) {
-      return res.status(400).json({ error: "Not enough coins" });
-    }
-
-    // get owned ids
-    const ownedIds = user.pokemons.map((p) => p.pokemon.toString());
-
-    // filter pool
-    let poolQuery: any = {};
-
-    if (mode === "one-legendary-egg") {
-      poolQuery.isLegendary = true;
-    } else if (mode === "one-mythical-egg") {
-      poolQuery.isMythical = true;
-    } else {
-      poolQuery.isLegendary = false;
-      poolQuery.isMythical = false;
-    }
-
-    const pool = await Pokemon.find(poolQuery).lean();
-
-    const notOwned = pool.filter((p) => !ownedIds.includes(p._id.toString()));
-
-    if (!notOwned.length) {
-      return res.status(400).json({ error: "No Pokémon left to hatch" });
-    }
-
-    // shuffle + pick
-    const shuffled = notOwned.sort(() => Math.random() - 0.5);
-
-    const selected = shuffled.slice(0, quantityMap[mode]);
-
-    // update user
-    const updates = selected.map((p) => ({
-      pokemon: p._id,
-      count: 1,
-    }));
-
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      {
-        $inc: { pokecoins: -priceMap[mode] },
-        $push: { pokemons: { $each: updates } },
-      },
-      { returnDocument: "after" },
-    );
-
-    res.json({
-      hatched: selected.map((p) => ({
-        _id: p._id,
-        name: p.name,
-      })),
-      user: updatedUser,
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Hatch failed" });
-  }
-});
+  },
+);
 
 app.listen(3000, () => {
   console.log("Server Started");
