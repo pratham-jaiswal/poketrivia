@@ -17,6 +17,7 @@ function PokeQuiz({ userData, setUserData, getAccessTokenSilently }) {
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
+    let isMounted = true;
     const startGame = async () => {
       const token = await getAccessTokenSilently();
       axios
@@ -33,6 +34,7 @@ function PokeQuiz({ userData, setUserData, getAccessTokenSilently }) {
           },
         )
         .then((response) => {
+          if (!isMounted) return;
           setQuestions(
             response.data.questions.map((q) => ({
               ...q,
@@ -42,11 +44,15 @@ function PokeQuiz({ userData, setUserData, getAccessTokenSilently }) {
           setSessionId(response.data.sessionId);
         })
         .catch((error) => {
+          if (!isMounted) return;
           console.error("Error starting game:", error);
         });
     };
 
     startGame();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleConfirmClick = (type) => {
@@ -105,7 +111,7 @@ function PokeQuiz({ userData, setUserData, getAccessTokenSilently }) {
       setUserData(response.data.user);
       setQuizComplete(true);
     } catch (error) {
-      console.error(err);
+      console.error(error);
       setErrorMessage("Failed to submit quiz. Try again.");
     }
   };

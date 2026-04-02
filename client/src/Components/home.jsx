@@ -139,20 +139,9 @@ function Home({
                   </p> */}
                 </div>
                 <div className="home-btn-container">
-                  <Link className="btn-container" to="/play-modes">
-                    <button className="home-btn">Play</button>
-                  </Link>
-                  <Link className="btn-container" to="/pokemart">
-                    <button className="home-btn">PokéMart</button>
-                  </Link>
-                  {/* <Link className="btn-container" to="/">
-                    <button className="home-btn" disabled>
-                      Trade (Coming Soon)
-                    </button>
-                  </Link> */}
-                  <Link className="btn-container" to="/pokedex">
-                    <button className="home-btn">Pokédex</button>
-                  </Link>
+                  <button className="home-btn btn-container" onClick={() => navigate("/play-modes")}>Play</button>
+                  <button className="home-btn btn-container" onClick={() => navigate("/pokemart")}>PokéMart</button>
+                  <button className="home-btn btn-container" onClick={() => navigate("/pokedex")}>Pokédex</button>
                 </div>
               </div>
             </>
@@ -176,6 +165,7 @@ function Home({
                         value={username}
                         onChange={handleNameChange}
                         placeholder="Red"
+                        aria-label="Username"
                       />
 
                       {errorMessage && (
@@ -204,7 +194,10 @@ function Home({
                     Next
                   </button>
                 ) : (
-                  <button className="home-btn" onClick={() => navigate(0)}>
+                  <button className="home-btn" onClick={() => {
+                    setCurrentDialogueIndex(0);
+                    setUsername("");
+                  }}>
                     Wake Up!
                   </button>
                 )}
@@ -245,13 +238,14 @@ function Home({
           <Link
             to="https://github.com/pratham-jaiswal/poketrivia"
             target="_blank"
+            aria-label="GitHub Repository"
           >
             <i className="fa-brands fa-github"></i>
           </Link>
-          <Link to="https://www.instagram.com/_pratham.dev" target="_blank">
+          <Link to="https://www.instagram.com/_pratham.dev" target="_blank" aria-label="Instagram Profile">
             <i className="fa-brands fa-instagram"></i>
           </Link>
-          <Link to="mailto:prathamj0502@gmail.com">
+          <Link to="mailto:prathamj0502@gmail.com" aria-label="Contact Email">
             <i className="fa-solid fa-envelope"></i>
           </Link>
         </div>
