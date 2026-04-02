@@ -1,15 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense, lazy } from "react";
 import Home from "./Components/home";
 import Navbar from "./Components/navbar";
 import { useAuth0 } from "@auth0/auth0-react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import axios from "axios";
-import Pokedex from "./Components/pokedex";
-import PlayModes from "./Components/playModes";
-import PokeMart from "./Components/pokemart";
-import PokeQuiz from "./Components/Trivia/pokeQuiz";
-import WhosThatPokemon from "./Components/Trivia/whosThatPokemon";
-import ScrambleSurge from "./Components/Trivia/scrambleSurge";
+
+const Pokedex = lazy(() => import("./Components/pokedex"));
+const PlayModes = lazy(() => import("./Components/playModes"));
+const PokeMart = lazy(() => import("./Components/pokemart"));
+const PokeQuiz = lazy(() => import("./Components/Trivia/pokeQuiz"));
+const WhosThatPokemon = lazy(() => import("./Components/Trivia/whosThatPokemon"));
+const ScrambleSurge = lazy(() => import("./Components/Trivia/scrambleSurge"));
 
 const NotFoundComponent = () => (
   <div style={{ textAlign: "center" }}>
@@ -81,7 +82,7 @@ function App() {
         target="_blank"
         rel="noopener"
         id="floating-patreon-btn"
-        area-label="Support Me on Patreon"
+        aria-label="Support Me on Patreon"
       >
         <img
           width={20}
@@ -89,10 +90,39 @@ function App() {
           alt="Support Me on Patreon"
         />
       </a>
-      {isLoaded && (
+      {!isLoaded ? (
+        <div 
+          className="status" 
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh",
+            width: "100vw"
+          }}
+        >
+          Loading PokéTrivia...
+        </div>
+      ) : (
         <Router>
           <Navbar userData={userData} isAuthenticated={isAuthenticated} />
-          <Routes>
+          <Suspense 
+            fallback={
+              <div 
+                className="status" 
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  height: "90vh",
+                  width: "100vw"
+                }}
+              >
+                Loading Application...
+              </div>
+            }
+          >
+            <Routes>
             <Route
               path="/"
               element={
@@ -176,7 +206,8 @@ function App() {
               }
             />
             <Route path="*" element={<NotFoundComponent />} />
-          </Routes>
+            </Routes>
+          </Suspense>
         </Router>
       )}
     </div>

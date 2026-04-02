@@ -29,8 +29,7 @@ function Card({ pokemon, isOwned }) {
         <div className="pokemon-img">
           {isOwned && (
             <>
-              <img src={pokemon.frontSpriteUrl} alt="pokemon" loading="lazy" />
-              <img src={pokemon.frontSpriteUrl} alt="pokemon" loading="lazy" />
+              <img src={pokemon.frontSpriteUrl} alt={pokemon.name || "pokemon"} loading="lazy" />
             </>
           )}
         </div>

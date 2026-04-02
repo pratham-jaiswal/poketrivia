@@ -1,9 +1,11 @@
 import joy from "../Images/Characters/joy.png";
 import { useState } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 function PokeMart({ userData, setUserData, getAccessTokenSilently }) {
+  const navigate = useNavigate();
+  
   const [currentDialogueIndex, setCurrentDialogueIndex] = useState(0);
   const [activeMode, setActiveMode] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -153,6 +155,15 @@ function PokeMart({ userData, setUserData, getAccessTokenSilently }) {
                 )}
               </div>
             </>
+          ) : hatchedPokemonList.length === 0 && !errorMessage ? (
+            <div className="home-container">
+              <div className="home-text-container">
+                <p className="dialogue">
+                  <span className="joy">JOY: </span>
+                  Just a moment! Your eggs are hatching...
+                </p>
+              </div>
+            </div>
           ) : (
             <div className="home-container">
               <div className="grid-btn-container center-grid">
@@ -177,7 +188,7 @@ function PokeMart({ userData, setUserData, getAccessTokenSilently }) {
                   <span className="joy">JOY: </span>
                   {hatchedPokemonList.length === 1
                     ? "Congratulations, Trainer! Your Pokémon has hatched and is eager to explore the world by your side! You can now check it out in your Pokédex."
-                    : "Congratulations, Trainer! Your Pokémons have hatched and are eager to explore the world by your side! You ca now check them out in your Pokédex."}
+                    : "Congratulations, Trainer! Your Pokémons have hatched and are eager to explore the world by your side! You can now check them out in your Pokédex."}
                 </p>
 
                 {errorMessage && (
@@ -200,9 +211,9 @@ function PokeMart({ userData, setUserData, getAccessTokenSilently }) {
                   Shop More
                 </button>
 
-                <Link className="btn-container" to="/">
-                  <button className="home-btn next">Leave</button>
-                </Link>
+                <button className="home-btn next btn-container" onClick={() => navigate("/")}>
+                  Leave
+                </button>
               </div>
             </div>
           )

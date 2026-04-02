@@ -17,6 +17,7 @@ function WhosThatPokemon({ userData, setUserData, getAccessTokenSilently }) {
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
+    let isMounted = true;
     const startGame = async () => {
       const token = await getAccessTokenSilently();
       axios
@@ -33,6 +34,7 @@ function WhosThatPokemon({ userData, setUserData, getAccessTokenSilently }) {
           },
         )
         .then((response) => {
+          if (!isMounted) return;
           setPokemonImageUrls(
             response.data.questions.map((q) => ({
               ...q,
@@ -41,10 +43,16 @@ function WhosThatPokemon({ userData, setUserData, getAccessTokenSilently }) {
           );
           setSessionId(response.data.sessionId);
         })
-        .catch(console.error);
+        .catch((error) => {
+          if (!isMounted) return;
+          console.error(error);
+        });
     };
 
     startGame();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleConfirmClick = (type) => {

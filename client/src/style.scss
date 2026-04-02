@@ -53,7 +53,7 @@ body {
   font-family: Arial, sans-serif;
   font-weight: bold;
   border-radius: 100%;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   text-decoration: none;
   display: flex;
   align-items: center;
@@ -61,7 +61,8 @@ body {
   transition: background-color 0.3s ease;
 }
 
-#floating-patreon-btn:hover, #floating-patreon-btn:focus {
+#floating-patreon-btn:hover,
+#floating-patreon-btn:focus {
   background-color: #e03e47;
   outline: none;
 }
@@ -188,6 +189,7 @@ img {
 
     .pkmn-holder {
       height: 100%;
+
       .wtp-pokemon {
         height: 100%;
       }
@@ -350,7 +352,7 @@ img {
     color: #0b4d8ab3;
   }
 
-  .home-btn{
+  .home-btn {
     margin: 10px;
     width: calc(80% + 20px);
   }
@@ -575,12 +577,7 @@ img {
         align-self: center;
         height: 90%;
         z-index: 2;
-      }
-
-      img:nth-child(2) {
-        z-index: 1;
-        filter: brightness(0) blur(3px);
-        margin: 12px 0 0 12px;
+        filter: drop-shadow(5px 5px 5px rgba(0, 0, 0, 0.7));
       }
     }
   }
@@ -683,6 +680,7 @@ img {
 
     .professors {
       align-items: start;
+
       .oak {
         height: calc(100% * 0.75);
       }
@@ -872,6 +870,7 @@ img {
 
       .pkmn-holder {
         height: 50%;
+
         .wtp-pokemon {
           height: 100%;
           filter: brightness(0) invert(1);
@@ -910,6 +909,7 @@ img {
 
   .center-container {
     width: 90vw;
+
     .professors {
       gap: 10px;
 

@@ -14,18 +14,19 @@ function Pokedex({ userData, getAccessTokenSilently }) {
   const observerRef = useRef(null);
 
   useEffect(() => {
-    if (!hasNext) return;
-    fetchPokemons();
+    if (offset > 0) {
+      fetchPokemons(false);
+    }
   }, [offset]);
 
   useEffect(() => {
-    setPokemons([]);
     setOffset(0);
     setHasNext(true);
+    fetchPokemons(true);
   }, [option, ownCategory, userData]);
 
-  const fetchPokemons = async () => {
-    if (loading || !hasNext) return;
+  const fetchPokemons = async (reset = false) => {
+    if (loading || (!reset && !hasNext)) return;
 
     try {
       setLoading(true);
@@ -33,7 +34,7 @@ function Pokedex({ userData, getAccessTokenSilently }) {
       const params = {
         view: option,
         category: option === "owned" ? ownCategory : "all",
-        offset,
+        offset: reset ? 0 : offset,
         limit: 20,
       };
 
@@ -51,7 +52,7 @@ function Pokedex({ userData, getAccessTokenSilently }) {
         },
       );
 
-      setPokemons((prev) => [...prev, ...res.data.data]);
+      setPokemons((prev) => (reset ? res.data.data : [...prev, ...res.data.data]));
       setHasNext(res.data.pagination.hasNext);
     } catch (err) {
       console.error("Error fetching pokemons:", err);
