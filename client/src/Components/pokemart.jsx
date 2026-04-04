@@ -1,16 +1,20 @@
 import joy from "../Images/Characters/joy.png";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 function PokeMart({ userData, setUserData, getAccessTokenSilently }) {
   const navigate = useNavigate();
-  
+
   const [currentDialogueIndex, setCurrentDialogueIndex] = useState(0);
   const [activeMode, setActiveMode] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [hatching, setHatching] = useState(false);
   const [hatchedPokemonList, setHatchedPokemonList] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const [pricingData, setPricingData] = useState([]);
+  const [priceChangedData, setPriceChangedData] = useState(null);
 
   const dialogues = [
     { dialogue: "Welcome to the PokéMart! I'm Nurse Joy." },
@@ -24,47 +28,67 @@ function PokeMart({ userData, setUserData, getAccessTokenSilently }) {
     { dialogue: "I'll be here to assist you with any questions you may have." },
   ];
 
-  const eggOptionDialogue = {
-    "one-egg": "Would you like to purchase one egg?",
-    "five-eggs": "How about a bundle of five eggs?",
-    "ten-eggs": "We also offer a special package of ten eggs.",
-    "one-legendary-egg":
-      "Would you like to purchase a legendary egg? It's a rare find!",
-    "one-mythical-egg":
-      "Are you interested in a mythical egg? They hold mysterious powers!",
-  };
+  useEffect(() => {
+    setLoading(true);
+    setHatchedPokemonList([]);
+    const fetchPricing = async () => {
+      try {
+        const token = await getAccessTokenSilently();
+        const res = await axios.get(
+          `${import.meta.env.VITE_APP_API_URL}/api/pokemart/pricing`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
+        setPricingData(res.data.data);
+      } catch (err) {
+        console.error("Failed to fetch pricing", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPricing();
+  }, [getAccessTokenSilently]);
 
-  const eggOptionPrice = {
-    "one-egg": 50,
-    "five-eggs": 250,
-    "ten-eggs": 500,
-    "one-legendary-egg": 2000,
-    "one-mythical-egg": 8000,
-  };
-
-  const handleHatch = async () => {
+  const handleHatch = async (confirmedPrice = null) => {
     try {
       setHatching(true);
+      setErrorMessage("");
       const token = await getAccessTokenSilently();
+
+      const currentSelection = pricingData.find((p) => p.mode === activeMode);
+      const priceToSend =
+        confirmedPrice !== null ? confirmedPrice : currentSelection?.finalPrice;
+
       const res = await axios.post(
         `${import.meta.env.VITE_APP_API_URL}/api/pokemart/hatch`,
         {
           userId: userData._id,
           mode: activeMode,
+          clientPrice: priceToSend,
         },
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         },
       );
 
       setHatchedPokemonList(res.data.hatched);
       setUserData(res.data.user);
+      setPriceChangedData(null);
     } catch (err) {
-      setErrorMessage(
-        "Oops, it seems something unexpected occurred. Please take a moment to rest while I work on resolving the issue.",
-      );
+      if (
+        err.response?.status === 409 &&
+        err.response?.data?.error === "PRICE_CHANGED"
+      ) {
+        setPriceChangedData({
+          newPrice: err.response.data.newPrice,
+          oldPrice: pricingData.find((p) => p.mode === activeMode)?.finalPrice,
+        });
+      } else {
+        setErrorMessage(
+          "Oops, it seems something unexpected occurred. Please take a moment to rest while I work on resolving the issue.",
+        );
+      }
       setHatching(false);
     }
   };
@@ -80,81 +104,145 @@ function PokeMart({ userData, setUserData, getAccessTokenSilently }) {
       const token = await getAccessTokenSilently();
       const res = await axios.post(
         `${import.meta.env.VITE_APP_API_URL}/api/user/visited`,
-        {
-          userId: userData._id,
-          field: "visitedPokeMart",
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
+        { userId: userData._id, field: "visitedPokeMart" },
+        { headers: { Authorization: `Bearer ${token}` } },
       );
-
       setUserData(res.data.user);
       handleNextDialogue();
     } catch {
-      setErrorMessage(
-        "Oops, it seems something unexpected occurred. Please take a moment to rest while I work on resolving the issue.",
-      );
+      setErrorMessage("Error updating visit status.");
     }
+  };
+
+  const selectedOption = pricingData.find((p) => p.mode === activeMode);
+
+  const getDiscountInfo = () => {
+    if (
+      !selectedOption ||
+      selectedOption.finalPrice >= selectedOption.basePrice
+    )
+      return null;
+
+    const expiryDate = new Date(
+      selectedOption.discountExpiresAt,
+    ).toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    return ` This is a discounted price (was ${selectedOption.basePrice}₱) available until ${expiryDate}!`;
   };
 
   return (
     <div className="center-container">
+      {loading && (
+        <div
+          className="status"
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh",
+            width: "100vw",
+          }}
+        >
+          Loading...
+        </div>
+      )}
       <div className="professors">
         <img draggable="false" className="joy" src={joy} alt="Joy" />
 
         {userData.visitedPokeMart ? (
           !hatching ? (
-            <>
-              <div className="home-container">
-                <div className="grid-btn-container">
-                  {Object.keys(eggOptionPrice).map((mode) => (
+            <div className="home-container">
+              {!priceChangedData ? (
+                <>
+                  <div className="grid-btn-container">
+                    {pricingData.map((item) => (
+                      <button
+                        key={item.mode}
+                        className={`mode-btn ${
+                          item.category === "legendary"
+                            ? "legendary-egg"
+                            : item.category === "mythical"
+                              ? "mythical-egg"
+                              : ""
+                        } ${activeMode === item.mode ? "active-btn" : ""}`}
+                        onClick={() =>
+                          setActiveMode(
+                            activeMode === item.mode ? "" : item.mode,
+                          )
+                        }
+                      >
+                        {item.displayName} -{" "}
+                        {item.finalPrice < item.basePrice && (
+                          <small
+                            style={{
+                              textDecoration: "line-through",
+                            }}
+                          >
+                            {item.basePrice}₱
+                          </small>
+                        )}{" "}
+                        {item.finalPrice}₱{" "}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="home-text-container">
+                    <p>
+                      <span className="joy">JOY: </span>
+                      {activeMode
+                        ? `${selectedOption?.dialogue}${getDiscountInfo() || ""}`
+                        : "Welcome to the PokéMart! How may I assist you today?"}
+                    </p>
+                  </div>
+
+                  {activeMode && (
                     <button
-                      key={mode}
-                      className={`mode-btn ${
-                        mode.includes("legendary")
-                          ? "legendary-egg"
-                          : mode.includes("mythical")
-                            ? "mythical-egg"
-                            : ""
-                      } ${activeMode === mode ? "active-btn" : ""}`}
-                      onClick={() =>
-                        setActiveMode(activeMode === mode ? "" : mode)
-                      }
+                      className="home-btn next-sm"
+                      onClick={() => handleHatch()}
+                      disabled={userData.pokecoins < selectedOption?.finalPrice}
                     >
-                      {mode === "one-egg" && "Hatch 1 Egg - 50₱"}
-                      {mode === "five-eggs" && "Hatch 5 Eggs - 250₱"}
-                      {mode === "ten-eggs" && "Hatch 10 Eggs - 500₱"}
-                      {mode === "one-legendary-egg" &&
-                        "Hatch 1 Legendary Egg - 2000₱"}
-                      {mode === "one-mythical-egg" &&
-                        "Hatch 1 Mythical Egg - 8000₱"}
+                      Hatch
                     </button>
-                  ))}
-                </div>
-
-                <div className="home-text-container">
-                  <p>
-                    <span className="joy">JOY: </span>
-                    {activeMode
-                      ? eggOptionDialogue[activeMode]
-                      : "Welcome to the PokéMart! How may I assist you today?"}
-                  </p>
-                </div>
-
-                {activeMode && (
-                  <button
-                    className="home-btn next-sm"
-                    onClick={handleHatch}
-                    disabled={userData.pokecoins < eggOptionPrice[activeMode]}
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="home-text-container">
+                    <p className="dialogue">
+                      <span className="joy">JOY: </span>
+                      Wait! The market prices just shifted. This will now cost{" "}
+                      {priceChangedData.newPrice}₱ instead of{" "}
+                      {priceChangedData.oldPrice}₱. Would you like to proceed?
+                    </p>
+                  </div>
+                  <div
+                    className="grid-btn-container"
+                    style={{
+                      placeItems: "center"
+                    }}
                   >
-                    Hatch
-                  </button>
-                )}
-              </div>
-            </>
+                    <button
+                      className="home-btn next-sm"
+                      onClick={() => handleHatch(priceChangedData.newPrice)}
+                      disabled={userData.pokecoins < priceChangedData.newPrice}
+                    >
+                      Confirm
+                    </button>
+                    <button
+                      className="home-btn next-sm"
+                      onClick={() => setPriceChangedData(null)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           ) : hatchedPokemonList.length === 0 && !errorMessage ? (
             <div className="home-container">
               <div className="home-text-container">
@@ -171,9 +259,9 @@ function PokeMart({ userData, setUserData, getAccessTokenSilently }) {
                   <button
                     key={pokemon._id}
                     className={`mode-btn capitalize ${
-                      activeMode === "one-legendary-egg"
+                      selectedOption?.category === "legendary"
                         ? "legendary-egg"
-                        : activeMode === "one-mythical-egg"
+                        : selectedOption?.category === "mythical"
                           ? "mythical-egg"
                           : ""
                     }`}
@@ -187,10 +275,9 @@ function PokeMart({ userData, setUserData, getAccessTokenSilently }) {
                 <p className="dialogue">
                   <span className="joy">JOY: </span>
                   {hatchedPokemonList.length === 1
-                    ? "Congratulations, Trainer! Your Pokémon has hatched and is eager to explore the world by your side! You can now check it out in your Pokédex."
-                    : "Congratulations, Trainer! Your Pokémons have hatched and are eager to explore the world by your side! You can now check them out in your Pokédex."}
+                    ? "Congratulations, Trainer! Your Pokémon has hatched! You can now check it out in your Pokédex."
+                    : "Congratulations, Trainer! Your Pokémons have hatched! You can now check them out in your Pokédex."}
                 </p>
-
                 {errorMessage && (
                   <p className="dialogue">
                     <span className="joy">JOY: </span>
@@ -210,8 +297,10 @@ function PokeMart({ userData, setUserData, getAccessTokenSilently }) {
                 >
                   Shop More
                 </button>
-
-                <button className="home-btn next btn-container" onClick={() => navigate("/")}>
+                <button
+                  className="home-btn next btn-container"
+                  onClick={() => navigate("/")}
+                >
                   Leave
                 </button>
               </div>
@@ -225,7 +314,6 @@ function PokeMart({ userData, setUserData, getAccessTokenSilently }) {
                 {dialogues[currentDialogueIndex].dialogue}
               </p>
             </div>
-
             {currentDialogueIndex < dialogues.length - 1 ? (
               <button className="home-btn next-sm" onClick={handleNextDialogue}>
                 Next

@@ -1,5 +1,10 @@
 import { Schema, model } from "mongoose";
-import type { IUser, IPokemon, IGameSession } from "./custom_types.ts";
+import type {
+  IUser,
+  IPokemon,
+  IGameSession,
+  IEggPricing,
+} from "./custom_types.ts";
 
 const userSchema = new Schema<IUser>({
   username: String,
@@ -66,3 +71,23 @@ export const GameSession = model<IGameSession>(
   "GameSession",
   gameSessionSchema,
 );
+
+const eggPricingSchema = new Schema<IEggPricing>({
+  mode: { type: String, unique: true },
+  displayName: String,
+  description: String,
+  category: {
+    type: String,
+    enum: ["normal", "legendary", "mythical"],
+  },
+  quantity: Number,
+  dialogue: String,
+
+  basePrice: Number,
+  discountPercent: Number,
+  discountExpiresAt: Date,
+
+  isActive: { type: Boolean, default: true },
+});
+
+export const EggPricing = model<IEggPricing>("EggPricing", eggPricingSchema);

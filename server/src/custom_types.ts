@@ -78,3 +78,18 @@ export type GameQuestion = {
   options: string[];
   correctAnswer: string;
 };
+
+export interface IEggPricing {
+  mode: string;
+  displayName: string;
+  description: string;
+  category: "normal" | "legendary" | "mythical";
+  quantity: number;
+  dialogue: string;
+
+  basePrice: number;
+  discountPercent?: number;
+  discountExpiresAt?: Date;
+
+  isActive: boolean;
+}
