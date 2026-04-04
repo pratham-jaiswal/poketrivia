@@ -3,13 +3,17 @@ import Home from "./Components/home";
 import Navbar from "./Components/navbar";
 import { useAuth0 } from "@auth0/auth0-react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
 import axios from "axios";
+import { showToast } from "./Utils/toast";
 
 const Pokedex = lazy(() => import("./Components/pokedex"));
 const PlayModes = lazy(() => import("./Components/playModes"));
-const PokeMart = lazy(() => import("./Components/pokemart"));
+const PokemonNursery = lazy(() => import("./Components/pokemonNursery"));
 const PokeQuiz = lazy(() => import("./Components/Trivia/pokeQuiz"));
-const WhosThatPokemon = lazy(() => import("./Components/Trivia/whosThatPokemon"));
+const WhosThatPokemon = lazy(
+  () => import("./Components/Trivia/whosThatPokemon"),
+);
 const ScrambleSurge = lazy(() => import("./Components/Trivia/scrambleSurge"));
 
 const NotFoundComponent = () => (
@@ -46,38 +50,46 @@ function App() {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchUser = async () => {
-      if (!isLoading) {
-        if (isAuthenticated) {
+      if (isLoading) return;
+
+      if (isAuthenticated && user?.email) {
+        try {
           const token = await getAccessTokenSilently();
-          axios
-            .get(
-              `${import.meta.env.VITE_APP_API_URL}/api/user?email=${user.email}`,
-              {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              },
-            )
-            .then((response) => {
-              setUserData(response.data.user);
-              setIsLoaded(true);
-            })
-            .catch((error) => {
-              console.error("Error sending user data to backend:", error);
-              setIsLoaded(false);
-            });
-        } else {
-          setIsLoaded(true);
+          const response = await axios.get(
+            `${import.meta.env.VITE_APP_API_URL}/api/user?email=${user.email}`,
+            { headers: { Authorization: `Bearer ${token}` } },
+          );
+
+          if (isMounted) {
+            setUserData(response.data.user);
+            setIsLoaded(true);
+          }
+        } catch {
+          if (isMounted) {
+            showToast.error(
+              "PokéCenter connection failed! Unable to retrieve Trainer data.",
+            );
+            setIsLoaded(true);
+          }
         }
+      } else {
+        if (isMounted) setIsLoaded(true);
       }
     };
+
     fetchUser();
-  }, [isAuthenticated, user, isLoading]);
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthenticated, user?.email, isLoading, getAccessTokenSilently]);
 
   return (
     <div className="app">
-      <a
+      <ToastContainer stacked style={{ lineHeight: 1.5 }} />
+      {/* <a
         href="https://www.patreon.com/collection/1819237"
         target="_blank"
         rel="noopener"
@@ -89,16 +101,16 @@ function App() {
           src="https://res.cloudinary.com/dhzmockpa/image/upload/v1745674680/PATREON_SYMBOL_1_BLACK_RGB_trsdty.svg"
           alt="Support Me on Patreon"
         />
-      </a>
+      </a> */}
       {!isLoaded ? (
-        <div 
-          className="status" 
+        <div
+          className="status"
           style={{
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
             height: "100vh",
-            width: "100vw"
+            width: "100vw",
           }}
         >
           Loading PokéTrivia...
@@ -106,16 +118,16 @@ function App() {
       ) : (
         <Router>
           <Navbar userData={userData} isAuthenticated={isAuthenticated} />
-          <Suspense 
+          <Suspense
             fallback={
-              <div 
-                className="status" 
+              <div
+                className="status"
                 style={{
                   display: "flex",
                   justifyContent: "center",
                   alignItems: "center",
                   height: "90vh",
-                  width: "100vw"
+                  width: "100vw",
                 }}
               >
                 Loading Application...
@@ -123,89 +135,89 @@ function App() {
             }
           >
             <Routes>
-            <Route
-              path="/"
-              element={
-                <Home
-                  isAuthenticated={isAuthenticated}
-                  userData={userData}
-                  setUserData={setUserData}
-                  userEmail={isAuthenticated ? user.email : null}
-                  getAccessTokenSilently={getAccessTokenSilently}
-                />
-              }
-            />
-            <Route
-              path="/play-modes"
-              element={
-                <PlayModes
-                  userData={userData}
-                  setUserData={setUserData}
-                  getAccessTokenSilently={getAccessTokenSilently}
-                />
-              }
-            />
-            <Route
-              path="/pokedex"
-              element={
-                <ProtectedRoute>
-                  <Pokedex
+              <Route
+                path="/"
+                element={
+                  <Home
+                    isAuthenticated={isAuthenticated}
+                    userData={userData}
+                    setUserData={setUserData}
+                    userEmail={isAuthenticated ? user.email : null}
+                    getAccessTokenSilently={getAccessTokenSilently}
+                  />
+                }
+              />
+              <Route
+                path="/play-modes"
+                element={
+                  <PlayModes
                     userData={userData}
                     setUserData={setUserData}
                     getAccessTokenSilently={getAccessTokenSilently}
                   />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/play-modes/poke-quiz"
-              element={
-                <ProtectedRoute>
-                  <PokeQuiz
-                    userData={userData}
-                    setUserData={setUserData}
-                    getAccessTokenSilently={getAccessTokenSilently}
-                  />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/play-modes/whos-that-pokemon"
-              element={
-                <ProtectedRoute>
-                  <WhosThatPokemon
-                    userData={userData}
-                    setUserData={setUserData}
-                    getAccessTokenSilently={getAccessTokenSilently}
-                  />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/play-modes/scramble-surge"
-              element={
-                <ProtectedRoute>
-                  <ScrambleSurge
-                    userData={userData}
-                    setUserData={setUserData}
-                    getAccessTokenSilently={getAccessTokenSilently}
-                  />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/pokemart"
-              element={
-                <ProtectedRoute>
-                  <PokeMart
-                    userData={userData}
-                    setUserData={setUserData}
-                    getAccessTokenSilently={getAccessTokenSilently}
-                  />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="*" element={<NotFoundComponent />} />
+                }
+              />
+              <Route
+                path="/pokedex"
+                element={
+                  <ProtectedRoute>
+                    <Pokedex
+                      userData={userData}
+                      setUserData={setUserData}
+                      getAccessTokenSilently={getAccessTokenSilently}
+                    />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/play-modes/poke-quiz"
+                element={
+                  <ProtectedRoute>
+                    <PokeQuiz
+                      userData={userData}
+                      setUserData={setUserData}
+                      getAccessTokenSilently={getAccessTokenSilently}
+                    />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/play-modes/whos-that-pokemon"
+                element={
+                  <ProtectedRoute>
+                    <WhosThatPokemon
+                      userData={userData}
+                      setUserData={setUserData}
+                      getAccessTokenSilently={getAccessTokenSilently}
+                    />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/play-modes/scramble-surge"
+                element={
+                  <ProtectedRoute>
+                    <ScrambleSurge
+                      userData={userData}
+                      setUserData={setUserData}
+                      getAccessTokenSilently={getAccessTokenSilently}
+                    />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/pokemon-nursery"
+                element={
+                  <ProtectedRoute>
+                    <PokemonNursery
+                      userData={userData}
+                      setUserData={setUserData}
+                      getAccessTokenSilently={getAccessTokenSilently}
+                    />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="*" element={<NotFoundComponent />} />
             </Routes>
           </Suspense>
         </Router>

@@ -141,7 +141,8 @@ app.post("/api/new-user", jwtCheck, async (req: Request, res: Response) => {
     uniquePokemons: 0,
     visitedPlayModes: false,
     visitedPokedex: false,
-    visitedPokeMart: false,
+    // visitedPokeMart: false,
+    visitedPokemonNursery: false,
     visitedTrade: false,
     visitedLeaderboards: false,
   });
@@ -266,7 +267,8 @@ app.post("/api/user/visited", jwtCheck, async (req: Request, res: Response) => {
     const allowedFields = [
       "visitedPlayModes",
       "visitedPokedex",
-      "visitedPokeMart",
+      // "visitedPokeMart",
+      "visitedPokemonNursery",
       "visitedTrade",
       "visitedLeaderboards",
     ];
@@ -292,7 +294,7 @@ app.post("/api/user/visited", jwtCheck, async (req: Request, res: Response) => {
   }
 });
 
-app.get("/api/pokemart/pricing", jwtCheck, async (req, res) => {
+app.get("/api/pokemon-nursery/pricing", jwtCheck, async (req, res) => {
   try {
     const list = await EggPricing.find({ isActive: true }).lean();
 
@@ -321,7 +323,7 @@ app.get("/api/pokemart/pricing", jwtCheck, async (req, res) => {
 });
 
 app.post(
-  "/api/pokemart/hatch",
+  "/api/pokemon-nursery/hatch",
   jwtCheck,
   async (req: Request, res: Response) => {
     try {

@@ -13,81 +13,64 @@ function ScrambleSurge({ userData, setUserData, getAccessTokenSilently }) {
 
   const [quizComplete, setQuizComplete] = useState(false);
   const [score, setScore] = useState(0);
-  const [scoreDialogue, setScoreDialogue] = useState();
+  const [scoreDialogue, setScoreDialogue] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
     const startGame = async () => {
-      const token = await getAccessTokenSilently();
-      axios
-        .post(
+      try {
+        setLoading(true);
+        const token = await getAccessTokenSilently();
+        const response = await axios.post(
           `${import.meta.env.VITE_APP_API_URL}/api/game/start`,
-          {
-            type: "scramble",
-            userId: userData._id,
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        )
-        .then((response) => {
-          if (!isMounted) return;
-          setpokemonScrambledNameList(
-            response.data.questions.map((q) => ({
-              ...q,
-              selected: "",
-            })),
-          );
-          setSessionId(response.data.sessionId);
-        })
-        .catch((error) => {
-          if (!isMounted) return;
-          console.error(error);
-        });
+          { type: "scramble", userId: userData._id },
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+
+        if (!isMounted) return;
+        setpokemonScrambledNameList(
+          response.data.questions.map((q) => ({ ...q, selected: "" })),
+        );
+        setSessionId(response.data.sessionId);
+      } catch {
+        if (!isMounted) return;
+        setErrorMessage(
+          "My rock-solid focus slipped! I couldn't load the scramble list. Try again!",
+        );
+      } finally {
+        if (isMounted) setLoading(false);
+      }
     };
 
     startGame();
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [getAccessTokenSilently, userData._id]);
 
   const handleConfirmClick = (type) => {
     const updatedList = [...pokemonScrambledNameList];
-
     if (optionChoice) {
       updatedList[currentQuestionIndex].selected = optionChoice;
     }
-
     setpokemonScrambledNameList(updatedList);
 
     if (type === "next") {
-      setQuestionIndex(
-        currentQuestionIndex < updatedList.length - 1
-          ? currentQuestionIndex + 1
-          : updatedList.length - 1,
-      );
+      setQuestionIndex((prev) => Math.min(prev + 1, updatedList.length - 1));
     } else if (type === "previous") {
-      setQuestionIndex(currentQuestionIndex > 0 ? currentQuestionIndex - 1 : 0);
+      setQuestionIndex((prev) => Math.max(prev - 1, 0));
     } else if (type === "confirm") {
       submitQuiz(updatedList);
     }
-
     setOptionChoice("");
-  };
-
-  const handleOptionClick = (option) => {
-    // const updatedList = [...pokemonScrambledNameList];
-    // updatedList[currentQuestionIndex].selected = "";
-    // setpokemonScrambledNameList(updatedList);
-    setOptionChoice(option);
   };
 
   const submitQuiz = async (updatedList) => {
     try {
+      setLoading(true);
+      setErrorMessage("");
       const answers = updatedList.map((q) => ({
         questionId: q.questionId,
         selected: q.selected,
@@ -95,172 +78,161 @@ function ScrambleSurge({ userData, setUserData, getAccessTokenSilently }) {
       const token = await getAccessTokenSilently();
       const res = await axios.post(
         `${import.meta.env.VITE_APP_API_URL}/api/game/submit`,
-        {
-          sessionId,
-          answers,
-          userId: userData._id,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
+        { sessionId, answers, userId: userData._id },
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       setScore(res.data.score);
       setUserData(res.data.user);
       setQuizComplete(true);
-    } catch (err) {
-      console.error(err);
-      setErrorMessage("Failed to submit quiz. Try again.");
+    } catch {
+      setErrorMessage(
+        "The scorecard is buried under some rocks! Try hitting confirm again.",
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
+    if (pokemonScrambledNameList[currentQuestionIndex]) {
+      setOptionChoice(
+        pokemonScrambledNameList[currentQuestionIndex].selected || "",
+      );
+    }
+  }, [currentQuestionIndex, pokemonScrambledNameList]);
+
+  useEffect(() => {
     if (quizComplete) {
       const dialogues = [
-        {
-          dialogue:
-            "Outstanding! A perfect score! You're getting closer to becoming a PokéTrivia Master with every question!",
-        },
-        {
-          dialogue:
-            "Congratulations! You're making great progress on your journey to becoming a PokéTrivia Master.",
-        },
-        {
-          dialogue:
-            "Impressive! Your knowledge of Pokémon is growing stronger with each correct answer.",
-        },
-        {
-          dialogue:
-            "Keep up the good work! Every correct answer brings you closer to your goal.",
-        },
-        {
-          dialogue:
-            "No worries! Even the greatest trainers started somewhere. Keep going!",
-        },
+        "Outstanding! A perfect score! You're a PokéTrivia Master!",
+        "Congratulations! You're making great progress.",
+        "Impressive! Your knowledge is growing stronger.",
+        "Keep up the good work! You're getting closer.",
+        "No worries! Even the greatest trainers started somewhere.",
       ];
-
-      let i = 0;
-      if (score === 10) i = 0;
-      else if (score >= 8) i = 1;
-      else if (score >= 6) i = 2;
-      else if (score >= 4) i = 3;
-      else i = 4;
-
+      let i =
+        score === 10 ? 0 : score >= 8 ? 1 : score >= 6 ? 2 : score >= 4 ? 3 : 4;
       setScoreDialogue(dialogues[i]);
     }
   }, [quizComplete, score]);
-
-  const completeQuiz = () => {
-    navigate("/");
-  };
 
   return (
     <div className="center-container">
       <div className="professors wtp-container">
         <img draggable="false" className="brock" src={brock} alt="Brock" />
 
-        {pokemonScrambledNameList.length > 0 && (
-          <>
-            {!quizComplete ? (
-              <div className="home-container">
-                <div className="home-text-container">
-                  <p>
-                    <span className="brock">BROCK: </span>Who's that Pokémon?
-                  </p>
-                  <p className="pkmn-holder">
-                    {pokemonScrambledNameList[currentQuestionIndex]?.question}
-                  </p>
-                </div>
+        {loading && !quizComplete && pokemonScrambledNameList.length === 0 && (
+          <div className="home-container">
+            <div className="home-text-container">
+              <p>
+                <span className="brock">BROCK: </span>Just setting up the
+                field...
+              </p>
+            </div>
+          </div>
+        )}
 
-                <div className="grid-btn-container">
-                  {pokemonScrambledNameList[currentQuestionIndex]?.options.map(
-                    (opt, i) => (
+        {errorMessage &&
+        !quizComplete &&
+        pokemonScrambledNameList.length === 0 ? (
+          <div className="home-container">
+            <div className="home-text-container">
+              <p>
+                <span className="brock">BROCK: </span>
+                {errorMessage}
+              </p>
+            </div>
+            <button className="home-btn next-sm" onClick={() => navigate("/")}>
+              Leave
+            </button>
+          </div>
+        ) : (
+          pokemonScrambledNameList.length > 0 && (
+            <div className="home-container">
+              {!quizComplete ? (
+                <>
+                  <div className="home-text-container">
+                    <p>
+                      <span className="brock">BROCK: </span>Who's that Pokémon?
+                    </p>
+                    <p className="pkmn-holder">
+                      {pokemonScrambledNameList[currentQuestionIndex]?.question}
+                    </p>
+                    {errorMessage && (
+                      <p style={{ color: "red" }}>
+                        <span className="brock">BROCK: </span> {errorMessage}
+                      </p>
+                    )}
+                  </div>
+                  <div className="grid-btn-container">
+                    {pokemonScrambledNameList[
+                      currentQuestionIndex
+                    ]?.options.map((opt, i) => (
                       <button
                         key={i}
-                        className={`trivia-option ${
-                          optionChoice === opt ||
-                          pokemonScrambledNameList[currentQuestionIndex]
-                            ?.selected === opt
-                            ? "active-btn"
-                            : ""
-                        }`}
-                        onClick={() => handleOptionClick(opt)}
+                        className={`trivia-option ${optionChoice === opt ? "active-btn" : ""}`}
+                        onClick={() => setOptionChoice(opt)}
                       >
                         {opt}
                       </button>
-                    ),
-                  )}
-                </div>
-
-                <div className="grid-btn-container">
+                    ))}
+                  </div>
+                  <div className="grid-btn-container">
+                    <button
+                      className="home-btn next"
+                      onClick={() => handleConfirmClick("previous")}
+                      disabled={currentQuestionIndex === 0 || loading}
+                    >
+                      Previous
+                    </button>
+                    <button
+                      className="home-btn next"
+                      onClick={() =>
+                        handleConfirmClick(
+                          currentQuestionIndex <
+                            pokemonScrambledNameList.length - 1
+                            ? "next"
+                            : "confirm",
+                        )
+                      }
+                      disabled={
+                        (!optionChoice &&
+                          !pokemonScrambledNameList[currentQuestionIndex]
+                            .selected) ||
+                        loading
+                      }
+                    >
+                      {loading
+                        ? "..."
+                        : currentQuestionIndex <
+                            pokemonScrambledNameList.length - 1
+                          ? "Next"
+                          : "Confirm"}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="home-container">
+                  <div className="home-text-container">
+                    <p>
+                      <span className="brock">BROCK: </span>Score: {score}/10
+                    </p>
+                    <p>
+                      <span className="brock">BROCK: </span>
+                      {scoreDialogue}
+                    </p>
+                  </div>
                   <button
-                    className="home-btn next"
-                    onClick={() => handleConfirmClick("previous")}
-                    disabled={currentQuestionIndex > 0 ? false : true}
+                    className="home-btn next-sm"
+                    onClick={() => navigate("/")}
                   >
-                    Previous
+                    Close
                   </button>
-
-                  {currentQuestionIndex <
-                  pokemonScrambledNameList.length - 1 ? (
-                    <button
-                      className="home-btn next"
-                      onClick={() => handleConfirmClick("next")}
-                      disabled={
-                        optionChoice ||
-                        pokemonScrambledNameList[currentQuestionIndex].selected
-                          ? false
-                          : true
-                      }
-                    >
-                      Next
-                    </button>
-                  ) : (
-                    <button
-                      className="home-btn next"
-                      onClick={() => handleConfirmClick("confirm")}
-                      disabled={
-                        optionChoice ||
-                        pokemonScrambledNameList[currentQuestionIndex].selected
-                          ? false
-                          : true
-                      }
-                    >
-                      Confirm
-                    </button>
-                  )}
                 </div>
-              </div>
-            ) : (
-              <div className="home-container">
-                {scoreDialogue && (
-                  <>
-                    <div className="home-text-container">
-                      <p>
-                        <span className="brock">BROCK: </span>You've completed
-                        the quiz with a score of {score}/10
-                      </p>
-                      <p>
-                        <span className="brock">BROCK: </span>
-                        {scoreDialogue.dialogue}
-                      </p>
-                      {errorMessage && (
-                        <p className="dialogue">
-                          <span className="mom">MOM: </span>
-                          {errorMessage}
-                        </p>
-                      )}
-                    </div>
-                    <button className="home-btn next-sm" onClick={completeQuiz}>
-                      Close
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-          </>
+              )}
+            </div>
+          )
         )}
       </div>
     </div>

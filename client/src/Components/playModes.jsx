@@ -75,9 +75,9 @@ function PlayModes({ userData, setUserData, getAccessTokenSilently }) {
         setUserData(response.data.user);
         handleNextDialogue();
       })
-      .catch((error) => {
+      .catch(() => {
         setErrorMessage(
-          "Oh dear, it looks like something went wrong. Why don't you take a little break while I figure out what happened and fix it?",
+          "Oh! My memory's a bit fuzzy today. I couldn't quite jot down that you've stopped by!",
         );
       });
   };

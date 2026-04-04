@@ -20,21 +20,15 @@ function Navbar({ isAuthenticated, userData }) {
             {!isAuthenticated && <LoginButton />}
             {(isAuthenticated && userData) && (
               <>
-                {/* <Link className="nav-btn" to="/profile">
-                  <span>Profile</span> <i className="fa-solid fa-user" />
-                </Link> */}
                 <div className="nav-btn">
                   {userData.totalScore}pts
                 </div>
                 <div className="nav-btn">
                   {userData.pokecoins}₱
                 </div>
-                <Link className="nav-btn" to="/pokemart">
-                  <span>PokéMart&nbsp;</span><i className="fa-solid fa-cart-shopping" />
+                <Link className="nav-btn" to="/pokemon-nursery">
+                  <span>Pokémon Nursery&nbsp;</span><i className="fa-solid fa-cart-shopping" />
                 </Link>
-                {/* <div title="Coming Soon" className="nav-btn">
-                  <span>Leaderboards&nbsp;</span> <i className="fa-solid fa-ranking-star" />
-                </div> */}
                 <LogoutButton />
               </>
             )}

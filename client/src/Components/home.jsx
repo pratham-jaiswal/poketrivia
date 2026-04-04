@@ -107,7 +107,7 @@ function Home({
         setUserData(response.data.user);
         handleNextDialogue();
       })
-      .catch((error) => {
+      .catch(() => {
         setErrorMessage(
           "This name is already taken by another user. Try another name.",
         );
@@ -134,14 +134,26 @@ function Home({
                     Use your PokéCoins to collect Pokémon card packs and expand
                     your collection.
                   </p>
-                  {/* <p>
-                    Trade cards with other players to complete your collection!
-                  </p> */}
                 </div>
                 <div className="home-btn-container">
-                  <button className="home-btn btn-container" onClick={() => navigate("/play-modes")}>Play</button>
-                  <button className="home-btn btn-container" onClick={() => navigate("/pokemart")}>PokéMart</button>
-                  <button className="home-btn btn-container" onClick={() => navigate("/pokedex")}>Pokédex</button>
+                  <button
+                    className="home-btn btn-container"
+                    onClick={() => navigate("/play-modes")}
+                  >
+                    Play
+                  </button>
+                  <button
+                    className="home-btn btn-container"
+                    onClick={() => navigate("/pokemon-nursery")}
+                  >
+                    Pokémon Nursery
+                  </button>
+                  <button
+                    className="home-btn btn-container"
+                    onClick={() => navigate("/pokedex")}
+                  >
+                    Pokédex
+                  </button>
                 </div>
               </div>
             </>
@@ -194,10 +206,13 @@ function Home({
                     Next
                   </button>
                 ) : (
-                  <button className="home-btn" onClick={() => {
-                    setCurrentDialogueIndex(0);
-                    setUsername("");
-                  }}>
+                  <button
+                    className="home-btn"
+                    onClick={() => {
+                      setCurrentDialogueIndex(0);
+                      setUsername("");
+                    }}
+                  >
                     Wake Up!
                   </button>
                 )}
@@ -236,16 +251,29 @@ function Home({
       <div className="center-container-2">
         <div className="home-text-container">
           <Link
-            to="https://github.com/pratham-jaiswal/poketrivia"
+            to={`https://github.com/pratham-jaiswal/poketrivia?ref=${window.location.host}`}
             target="_blank"
             aria-label="GitHub Repository"
           >
             <i className="fa-brands fa-github"></i>
           </Link>
-          <Link to="https://www.instagram.com/_pratham.dev" target="_blank" aria-label="Instagram Profile">
+          <Link
+            to={`https://www.instagram.com/j.pratham.52?ref=${window.location.host}`}
+            target="_blank"
+            aria-label="Instagram Profile"
+          >
             <i className="fa-brands fa-instagram"></i>
           </Link>
-          <Link to="mailto:prathamj0502@gmail.com" aria-label="Contact Email">
+          <Link
+            to="mailto:contact@prathamjaiswal.com"
+            aria-label="Contact Email"
+          >
+            <i className="fa-solid fa-envelope"></i>
+          </Link>
+          <Link
+            to="mailto:prathamj0502@gmail.com"
+            aria-label="Alternate Contact Email"
+          >
             <i className="fa-solid fa-envelope"></i>
           </Link>
         </div>
