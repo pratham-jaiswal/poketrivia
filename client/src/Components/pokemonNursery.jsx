@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-function PokeMart({ userData, setUserData, getAccessTokenSilently }) {
+function PokemonNursery({ userData, setUserData, getAccessTokenSilently }) {
   const navigate = useNavigate();
 
   const [currentDialogueIndex, setCurrentDialogueIndex] = useState(0);
@@ -17,7 +17,7 @@ function PokeMart({ userData, setUserData, getAccessTokenSilently }) {
   const [priceChangedData, setPriceChangedData] = useState(null);
 
   const dialogues = [
-    { dialogue: "Welcome to the PokéMart! I'm Nurse Joy." },
+    { dialogue: "Welcome to the Pokémon Nursery! I'm Nurse Joy." },
     {
       dialogue:
         "Here, you can buy eggs and instantly hatch them with pokécoins.",
@@ -35,14 +35,12 @@ function PokeMart({ userData, setUserData, getAccessTokenSilently }) {
       try {
         const token = await getAccessTokenSilently();
         const res = await axios.get(
-          `${import.meta.env.VITE_APP_API_URL}/api/pokemart/pricing`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
+          `${import.meta.env.VITE_APP_API_URL}/api/pokemon-nursery/pricing`,
+          { headers: { Authorization: `Bearer ${token}` } },
         );
         setPricingData(res.data.data);
-      } catch (err) {
-        console.error("Failed to fetch pricing", err);
+      } catch {
+        setErrorMessage("The Nursery list is missing! I'll have it sorted out shortly.");
       } finally {
         setLoading(false);
       }
@@ -51,25 +49,23 @@ function PokeMart({ userData, setUserData, getAccessTokenSilently }) {
   }, [getAccessTokenSilently]);
 
   const handleHatch = async (confirmedPrice = null) => {
+    const currentSelection = pricingData.find((p) => p.mode === activeMode);
     try {
       setHatching(true);
       setErrorMessage("");
       const token = await getAccessTokenSilently();
 
-      const currentSelection = pricingData.find((p) => p.mode === activeMode);
       const priceToSend =
         confirmedPrice !== null ? confirmedPrice : currentSelection?.finalPrice;
 
       const res = await axios.post(
-        `${import.meta.env.VITE_APP_API_URL}/api/pokemart/hatch`,
+        `${import.meta.env.VITE_APP_API_URL}/api/pokemon-nursery/hatch`,
         {
           userId: userData._id,
           mode: activeMode,
           clientPrice: priceToSend,
         },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       setHatchedPokemonList(res.data.hatched);
@@ -84,13 +80,22 @@ function PokeMart({ userData, setUserData, getAccessTokenSilently }) {
           newPrice: err.response.data.newPrice,
           oldPrice: pricingData.find((p) => p.mode === activeMode)?.finalPrice,
         });
+        setHatching(false);
       } else {
         setErrorMessage(
-          "Oops, it seems something unexpected occurred. Please take a moment to rest while I work on resolving the issue.",
+          err.response?.data?.message ||
+            "Oh no! The eggs aren't quite ready to hatch yet. Try again later!",
         );
       }
-      setHatching(false);
     }
+  };
+
+  const resetNurseryState = () => {
+    setActiveMode("");
+    setHatching(false);
+    setHatchedPokemonList([]);
+    setErrorMessage("");
+    setPriceChangedData(null);
   };
 
   const handleNextDialogue = () => {
@@ -104,13 +109,13 @@ function PokeMart({ userData, setUserData, getAccessTokenSilently }) {
       const token = await getAccessTokenSilently();
       const res = await axios.post(
         `${import.meta.env.VITE_APP_API_URL}/api/user/visited`,
-        { userId: userData._id, field: "visitedPokeMart" },
+        { userId: userData._id, field: "visitedPokemonNursery" },
         { headers: { Authorization: `Bearer ${token}` } },
       );
       setUserData(res.data.user);
       handleNextDialogue();
     } catch {
-      setErrorMessage("Error updating visit status.");
+      setErrorMessage("Failed to save your visit to the Nursery log!");
     }
   };
 
@@ -122,7 +127,6 @@ function PokeMart({ userData, setUserData, getAccessTokenSilently }) {
       selectedOption.finalPrice >= selectedOption.basePrice
     )
       return null;
-
     const expiryDate = new Date(
       selectedOption.discountExpiresAt,
     ).toLocaleString(undefined, {
@@ -131,31 +135,33 @@ function PokeMart({ userData, setUserData, getAccessTokenSilently }) {
       hour: "2-digit",
       minute: "2-digit",
     });
-
     return ` This is a discounted price (was ${selectedOption.basePrice}₱) available until ${expiryDate}!`;
   };
 
+  if (loading) {
+    return (
+      <div
+        className="status"
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          width: "100vw",
+        }}
+      >
+        Loading...
+      </div>
+    );
+  }
+
   return (
     <div className="center-container">
-      {loading && (
-        <div
-          className="status"
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "100vh",
-            width: "100vw",
-          }}
-        >
-          Loading...
-        </div>
-      )}
       <div className="professors">
         <img draggable="false" className="joy" src={joy} alt="Joy" />
 
-        {userData.visitedPokeMart ? (
-          !hatching ? (
+        {userData.visitedPokemonNursery ? (
+          !hatching && hatchedPokemonList.length === 0 && !errorMessage ? (
             <div className="home-container">
               {!priceChangedData ? (
                 <>
@@ -163,13 +169,7 @@ function PokeMart({ userData, setUserData, getAccessTokenSilently }) {
                     {pricingData.map((item) => (
                       <button
                         key={item.mode}
-                        className={`mode-btn ${
-                          item.category === "legendary"
-                            ? "legendary-egg"
-                            : item.category === "mythical"
-                              ? "mythical-egg"
-                              : ""
-                        } ${activeMode === item.mode ? "active-btn" : ""}`}
+                        className={`mode-btn ${item.category === "legendary" ? "legendary-egg" : item.category === "mythical" ? "mythical-egg" : ""} ${activeMode === item.mode ? "active-btn" : ""}`}
                         onClick={() =>
                           setActiveMode(
                             activeMode === item.mode ? "" : item.mode,
@@ -178,28 +178,24 @@ function PokeMart({ userData, setUserData, getAccessTokenSilently }) {
                       >
                         {item.displayName} -{" "}
                         {item.finalPrice < item.basePrice && (
-                          <small
-                            style={{
-                              textDecoration: "line-through",
-                            }}
-                          >
+                          <small style={{ textDecoration: "line-through" }}>
                             {item.basePrice}₱
                           </small>
                         )}{" "}
-                        {item.finalPrice}₱{" "}
+                        {item.finalPrice}₱
                       </button>
                     ))}
                   </div>
-
                   <div className="home-text-container">
                     <p>
                       <span className="joy">JOY: </span>
-                      {activeMode
-                        ? `${selectedOption?.dialogue}${getDiscountInfo() || ""}`
-                        : "Welcome to the PokéMart! How may I assist you today?"}
+                      {pricingData.length > 0
+                        ? activeMode
+                          ? `${selectedOption?.dialogue}${getDiscountInfo() || ""}`
+                          : "Welcome to the Pokémon Nursery! How may I assist you today?"
+                        : "Oh my! It seems the Incubator is out of order. Check back soon!"}
                     </p>
                   </div>
-
                   {activeMode && (
                     <button
                       className="home-btn next-sm"
@@ -215,16 +211,13 @@ function PokeMart({ userData, setUserData, getAccessTokenSilently }) {
                   <div className="home-text-container">
                     <p className="dialogue">
                       <span className="joy">JOY: </span>
-                      Wait! The market prices just shifted. This will now cost{" "}
-                      {priceChangedData.newPrice}₱ instead of{" "}
-                      {priceChangedData.oldPrice}₱. Would you like to proceed?
+                      Wait! The prices just shifted to{" "}
+                      {priceChangedData.newPrice}₱. Proceed?
                     </p>
                   </div>
                   <div
                     className="grid-btn-container"
-                    style={{
-                      placeItems: "center"
-                    }}
+                    style={{ placeItems: "center" }}
                   >
                     <button
                       className="home-btn next-sm"
@@ -243,12 +236,23 @@ function PokeMart({ userData, setUserData, getAccessTokenSilently }) {
                 </>
               )}
             </div>
-          ) : hatchedPokemonList.length === 0 && !errorMessage ? (
+          ) : errorMessage ? (
             <div className="home-container">
               <div className="home-text-container">
                 <p className="dialogue">
-                  <span className="joy">JOY: </span>
-                  Just a moment! Your eggs are hatching...
+                  <span className="joy">JOY: </span> {errorMessage}
+                </p>
+              </div>
+              <button className="home-btn next-sm" onClick={() => pricingData.length > 0 ? resetNurseryState() : navigate("/")}>
+                {pricingData.length > 0 ? "Back to Nursery" : "Go Back" }
+              </button>
+            </div>
+          ) : hatchedPokemonList.length === 0 ? (
+            <div className="home-container">
+              <div className="home-text-container">
+                <p className="dialogue">
+                  <span className="joy">JOY: </span> Just a moment! Your eggs
+                  are hatching...
                 </p>
               </div>
             </div>
@@ -258,43 +262,24 @@ function PokeMart({ userData, setUserData, getAccessTokenSilently }) {
                 {hatchedPokemonList.map((pokemon) => (
                   <button
                     key={pokemon._id}
-                    className={`mode-btn capitalize ${
-                      selectedOption?.category === "legendary"
-                        ? "legendary-egg"
-                        : selectedOption?.category === "mythical"
-                          ? "mythical-egg"
-                          : ""
-                    }`}
+                    className={`mode-btn capitalize ${selectedOption?.category === "legendary" ? "legendary-egg" : selectedOption?.category === "mythical" ? "mythical-egg" : ""}`}
                   >
                     {pokemon.name}
                   </button>
                 ))}
               </div>
-
               <div className="home-text-container">
                 <p className="dialogue">
                   <span className="joy">JOY: </span>
+                  Congratulations! Your{" "}
                   {hatchedPokemonList.length === 1
-                    ? "Congratulations, Trainer! Your Pokémon has hatched! You can now check it out in your Pokédex."
-                    : "Congratulations, Trainer! Your Pokémons have hatched! You can now check them out in your Pokédex."}
+                    ? "Pokémon has"
+                    : "Pokémons have"}{" "}
+                  hatched! Check them in your Pokédex.
                 </p>
-                {errorMessage && (
-                  <p className="dialogue">
-                    <span className="joy">JOY: </span>
-                    {errorMessage}
-                  </p>
-                )}
               </div>
-
               <div className="grid-btn-container">
-                <button
-                  className="home-btn next"
-                  onClick={() => {
-                    setActiveMode("");
-                    setHatching(false);
-                    setHatchedPokemonList([]);
-                  }}
-                >
+                <button className="home-btn next" onClick={resetNurseryState}>
                   Shop More
                 </button>
                 <button
@@ -310,7 +295,7 @@ function PokeMart({ userData, setUserData, getAccessTokenSilently }) {
           <div className="home-container">
             <div className="home-text-container">
               <p className="dialogue">
-                <span className="joy">JOY: </span>
+                <span className="joy">JOY: </span>{" "}
                 {dialogues[currentDialogueIndex].dialogue}
               </p>
             </div>
@@ -330,4 +315,4 @@ function PokeMart({ userData, setUserData, getAccessTokenSilently }) {
   );
 }
 
-export default PokeMart;
+export default PokemonNursery;

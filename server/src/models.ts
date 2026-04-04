@@ -23,7 +23,8 @@ const userSchema = new Schema<IUser>({
   uniquePokemons: Number,
   visitedPlayModes: Boolean,
   visitedPokedex: Boolean,
-  visitedPokeMart: Boolean,
+  // visitedPokeMart: Boolean,
+  visitedPokemonNursery: Boolean,
   visitedTrade: Boolean,
   visitedLeaderboards: Boolean,
 });

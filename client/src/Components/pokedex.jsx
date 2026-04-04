@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import Card from "./card";
+import { showToast } from "../Utils/toast";
 
 function Pokedex({ userData, getAccessTokenSilently }) {
   const [pokemons, setPokemons] = useState([]);
@@ -13,56 +14,62 @@ function Pokedex({ userData, getAccessTokenSilently }) {
 
   const observerRef = useRef(null);
 
-  useEffect(() => {
-    if (offset > 0) {
-      fetchPokemons(false);
-    }
-  }, [offset]);
+  const isFetching = useRef(false);
+
+  const fetchPokemons = useCallback(
+    async (reset = false, targetOffset = 0) => {
+      if (isFetching.current || (!reset && !hasNext)) return;
+
+      try {
+        isFetching.current = true;
+        setLoading(true);
+
+        const params = {
+          view: option,
+          category: option === "owned" ? ownCategory : "all",
+          offset: targetOffset,
+          limit: 20,
+        };
+
+        if (userData?._id) params.userId = userData._id;
+
+        const token = await getAccessTokenSilently();
+        const res = await axios.get(
+          `${import.meta.env.VITE_APP_API_URL}/api/pokemons`,
+          {
+            params,
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
+
+        setPokemons((prev) =>
+          reset ? res.data.data : [...prev, ...res.data.data],
+        );
+        setHasNext(res.data.pagination.hasNext);
+      } catch (err) {
+        const errorDetail = err.response?.data?.error || "Pokedex signal lost!";
+        showToast.error(errorDetail);
+        setHasNext(false);
+      } finally {
+        setLoading(false);
+        isFetching.current = false;
+      }
+    },
+    [option, ownCategory, userData?._id, getAccessTokenSilently, hasNext],
+  );
 
   useEffect(() => {
     setOffset(0);
     setHasNext(true);
-    fetchPokemons(true);
-  }, [option, ownCategory, userData]);
+    fetchPokemons(true, 0);
+  }, [option, ownCategory, userData?._id, fetchPokemons]);
 
-  const fetchPokemons = async (reset = false) => {
-    if (loading || (!reset && !hasNext)) return;
-
-    try {
-      setLoading(true);
-
-      const params = {
-        view: option,
-        category: option === "owned" ? ownCategory : "all",
-        offset: reset ? 0 : offset,
-        limit: 20,
-      };
-
-      if (userData) {
-        params.userId = userData._id;
-      }
-      const token = await getAccessTokenSilently();
-      const res = await axios.get(
-        `${import.meta.env.VITE_APP_API_URL}/api/pokemons`,
-        {
-          params,
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-
-      setPokemons((prev) => (reset ? res.data.data : [...prev, ...res.data.data]));
-      setHasNext(res.data.pagination.hasNext);
-    } catch (err) {
-      console.error("Error fetching pokemons:", err);
-      setHasNext(false);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (offset > 0) {
+      fetchPokemons(false, offset);
     }
-  };
+  }, [offset, fetchPokemons]);
 
-  // 🔥 infinite scroll observer
   useEffect(() => {
     if (loading) return;
 

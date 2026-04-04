@@ -12,5 +12,5 @@ If this is something you think you can fix, then fork the repository and create 
 A good branch name would be (where issue #124 is the ticket you're working on):
 
 ```bash
-git checkout -b feature/124-add-leaderboards
+git checkout -b feature/124-add-shift-sort
 ```

@@ -30,7 +30,8 @@ export interface IUser {
   uniquePokemons: number;
   visitedPlayModes: boolean;
   visitedPokedex: boolean;
-  visitedPokeMart: boolean;
+  // visitedPokeMart: boolean;
+  visitedPokemonNursery: boolean;
   visitedTrade: boolean;
   visitedLeaderboards: boolean;
 }
