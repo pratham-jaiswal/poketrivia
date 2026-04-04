@@ -10,12 +10,13 @@ import type {
   GameQuestion,
   IUser,
 } from "./custom_types.ts";
-import { GameSession, Pokemon, User } from "./models.ts";
+import { EggPricing, GameSession, Pokemon, User } from "./models.ts";
 import {
   generateFactQuiz,
   generateScrambleQuiz,
   generateImageQuiz,
 } from "./game_utils.ts";
+import { calculateFinalPrice } from "./pricing_util.ts";
 
 dotenv.config();
 
@@ -291,52 +292,71 @@ app.post("/api/user/visited", jwtCheck, async (req: Request, res: Response) => {
   }
 });
 
+app.get("/api/pokemart/pricing", jwtCheck, async (req, res) => {
+  try {
+    const list = await EggPricing.find({ isActive: true }).lean();
+
+    const data = list.map((item) => {
+      const { finalPrice, isDiscountValid } = calculateFinalPrice(item);
+
+      return {
+        mode: item.mode,
+        displayName: item.displayName,
+        description: item.description,
+        category: item.category,
+        quantity: item.quantity,
+        dialogue: item.dialogue,
+
+        basePrice: item.basePrice,
+        finalPrice,
+        discountPercent: isDiscountValid ? item.discountPercent : null,
+        discountExpiresAt: item.discountExpiresAt,
+      };
+    });
+
+    res.json({ data });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch pricing" });
+  }
+});
+
 app.post(
   "/api/pokemart/hatch",
   jwtCheck,
   async (req: Request, res: Response) => {
     try {
-      const { userId, mode } = req.body as {
+      const { userId, mode, clientPrice } = req.body as {
         userId: string;
         mode: string;
+        clientPrice: number;
       };
 
-      const priceMap: Record<string, number> = {
-        "one-egg": 50,
-        "five-eggs": 250,
-        "ten-eggs": 500,
-        "one-legendary-egg": 2000,
-        "one-mythical-egg": 8000,
-      };
+      const pricing = await EggPricing.findOne({
+        mode,
+        isActive: true,
+      }).lean();
 
-      const quantityMap: Record<string, number> = {
-        "one-egg": 1,
-        "five-eggs": 5,
-        "ten-eggs": 10,
-        "one-legendary-egg": 1,
-        "one-mythical-egg": 1,
-      };
-
-      if (!priceMap[mode]) {
+      if (!pricing) {
         return res.status(400).json({ error: "Invalid mode" });
+      }
+
+      const { finalPrice } = calculateFinalPrice(pricing);
+
+      if (clientPrice !== finalPrice) {
+        return res.status(409).json({
+          error: "PRICE_CHANGED",
+          newPrice: finalPrice,
+        });
       }
 
       const user = await User.findById(userId).lean();
       if (!user) return res.status(404).json({ error: "User not found" });
 
-      if (user.pokecoins < priceMap[mode]) {
-        return res.status(400).json({ error: "Not enough coins" });
-      }
-
-      // get owned ids
-      const ownedIds = user.pokemons.map((p) => p.pokemon.toString());
-
-      // filter pool
       let poolQuery: any = {};
 
-      if (mode === "one-legendary-egg") {
+      if (pricing.category === "legendary") {
         poolQuery.isLegendary = true;
-      } else if (mode === "one-mythical-egg") {
+      } else if (pricing.category === "mythical") {
         poolQuery.isMythical = true;
       } else {
         poolQuery.isLegendary = false;
@@ -345,31 +365,37 @@ app.post(
 
       const pool = await Pokemon.find(poolQuery).lean();
 
+      const ownedIds = user.pokemons.map((p) => p.pokemon.toString());
+
       const notOwned = pool.filter((p) => !ownedIds.includes(p._id.toString()));
 
       if (!notOwned.length) {
         return res.status(400).json({ error: "No Pokémon left to hatch" });
       }
 
-      // shuffle + pick
       const shuffled = notOwned.sort(() => Math.random() - 0.5);
+      const selected = shuffled.slice(0, pricing.quantity);
 
-      const selected = shuffled.slice(0, quantityMap[mode]);
-
-      // update user
       const updates = selected.map((p) => ({
         pokemon: p._id,
         count: 1,
       }));
 
-      const updatedUser = await User.findByIdAndUpdate(
-        userId,
+      const updatedUser = await User.findOneAndUpdate(
         {
-          $inc: { pokecoins: -priceMap[mode] },
+          _id: userId,
+          pokecoins: { $gte: finalPrice },
+        },
+        {
+          $inc: { pokecoins: -finalPrice },
           $push: { pokemons: { $each: updates } },
         },
         { returnDocument: "after" },
       );
+
+      if (!updatedUser) {
+        return res.status(400).json({ error: "Not enough coins" });
+      }
 
       res.json({
         hatched: selected.map((p) => ({
