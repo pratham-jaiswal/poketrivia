@@ -13,12 +13,12 @@ function Pokedex({ userData, getAccessTokenSilently }) {
   const [loading, setLoading] = useState(false);
 
   const observerRef = useRef(null);
-
+  const hasNextRef = useRef(true);
   const isFetching = useRef(false);
 
   const fetchPokemons = useCallback(
     async (reset = false, targetOffset = 0) => {
-      if (isFetching.current || (!reset && !hasNext)) return;
+      if (isFetching.current || (!reset && !hasNextRef.current)) return;
 
       try {
         isFetching.current = true;
@@ -45,17 +45,20 @@ function Pokedex({ userData, getAccessTokenSilently }) {
         setPokemons((prev) =>
           reset ? res.data.data : [...prev, ...res.data.data],
         );
-        setHasNext(res.data.pagination.hasNext);
+        const next = res.data.pagination.hasNext;
+        setHasNext(next);
+        hasNextRef.current = next;
       } catch (err) {
         const errorDetail = err.response?.data?.error || "Pokedex signal lost!";
         showToast.error(errorDetail);
         setHasNext(false);
+        hasNextRef.current = false;
       } finally {
         setLoading(false);
         isFetching.current = false;
       }
     },
-    [option, ownCategory, userData?._id, getAccessTokenSilently, hasNext],
+    [option, ownCategory, userData?._id, getAccessTokenSilently],
   );
 
   useEffect(() => {
@@ -71,19 +74,23 @@ function Pokedex({ userData, getAccessTokenSilently }) {
   }, [offset, fetchPokemons]);
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || isFetching.current) return;
 
     if (observerRef.current) observerRef.current.disconnect();
 
     observerRef.current = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting && hasNext && !loading) {
+      if (entries[0].isIntersecting && hasNext && !isFetching.current) {
         setOffset((prev) => prev + 1);
       }
     });
 
     const el = document.querySelector("#scroll-anchor");
     if (el) observerRef.current.observe(el);
-  }, [loading, hasNext]);
+
+    return () => {
+      if (observerRef.current) observerRef.current.disconnect();
+    };
+  }, [loading, hasNext, fetchPokemons]);
 
   return (
     <div className="pokedex-container">

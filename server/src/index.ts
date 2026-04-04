@@ -45,7 +45,8 @@ if (mongoose.connection.readyState === 0) {
 app.get("/api/pokemons", jwtCheck, async (req: Request, res: Response) => {
   try {
     const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
-    const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+    // const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+    const limit = 100
 
     const view = (req.query.view as string) || "all";
     const category = (req.query.category as string) || "all";
@@ -113,7 +114,7 @@ app.get("/api/pokemons", jwtCheck, async (req: Request, res: Response) => {
         offset,
         limit,
         totalPages: Math.ceil(total / limit),
-        hasNext: offset * limit < total,
+        hasNext: (offset + 1) * limit < total,
         hasPrev: offset > 0,
       },
     });
