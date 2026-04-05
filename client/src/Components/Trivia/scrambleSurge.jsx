@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { showToast } from "../../Utils/toast";
 
 function ScrambleSurge({ userData, setUserData, getAccessTokenSilently }) {
   const navigate = useNavigate();
@@ -81,10 +82,13 @@ function ScrambleSurge({ userData, setUserData, getAccessTokenSilently }) {
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
+      const rewards = res.data.rewards;
+      showToast.reward(rewards);
       setScore(res.data.score);
       setUserData(res.data.user);
       setQuizComplete(true);
-    } catch {
+    } catch (err) {
+      console.log(err);
       setErrorMessage(
         "The scorecard is buried under some rocks! Try hitting confirm again.",
       );
@@ -119,7 +123,12 @@ function ScrambleSurge({ userData, setUserData, getAccessTokenSilently }) {
   return (
     <div className="center-container">
       <div className="professors wtp-container">
-        <img draggable="false" className="brock" src={`${import.meta.env.VITE_APP_CLOUDINARY_BASE}/brock_ncikjz.png`} alt="Brock" />
+        <img
+          draggable="false"
+          className="brock"
+          src={`${import.meta.env.VITE_APP_CLOUDINARY_BASE}/brock_ncikjz.png`}
+          alt="Brock"
+        />
 
         {loading && !quizComplete && pokemonScrambledNameList.length === 0 && (
           <div className="home-container">
@@ -215,7 +224,8 @@ function ScrambleSurge({ userData, setUserData, getAccessTokenSilently }) {
                 <div className="home-container">
                   <div className="home-text-container">
                     <p>
-                      <span className="brock">BROCK: </span>Score: {score}/10
+                      <span className="brock">BROCK: </span>Score: {score}/
+                      {pokemonScrambledNameList.length}
                     </p>
                     <p>
                       <span className="brock">BROCK: </span>

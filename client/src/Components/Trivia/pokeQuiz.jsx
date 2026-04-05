@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { showToast } from "../../Utils/toast";
 
 function PokeQuiz({ userData, setUserData, getAccessTokenSilently }) {
   const navigate = useNavigate();
@@ -87,6 +88,8 @@ function PokeQuiz({ userData, setUserData, getAccessTokenSilently }) {
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
+      const rewards = response.data.rewards;
+      showToast.reward(rewards);
       setScore(response.data.score);
       setUserData(response.data.user);
       setQuizComplete(true);
@@ -231,7 +234,8 @@ function PokeQuiz({ userData, setUserData, getAccessTokenSilently }) {
                 <div className="home-container">
                   <div className="home-text-container">
                     <p>
-                      <span className="kukui">KUKUI: </span>Score: {score}/20
+                      <span className="kukui">KUKUI: </span>Score: {score}/
+                      {questions.length}
                     </p>
                     <p>
                       <span className="kukui">KUKUI: </span>
