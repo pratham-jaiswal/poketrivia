@@ -17,6 +17,7 @@ import {
   generateImageQuiz,
 } from "./game_utils.ts";
 import { calculateFinalPrice } from "./pricing_util.ts";
+import { setTimeout } from "timers/promises";
 
 dotenv.config();
 
@@ -44,9 +45,9 @@ if (mongoose.connection.readyState === 0) {
 
 app.get("/api/pokemons", jwtCheck, async (req: Request, res: Response) => {
   try {
+    await setTimeout(3000);
     const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
-    // const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
-    const limit = 100
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
 
     const view = (req.query.view as string) || "all";
     const category = (req.query.category as string) || "all";
@@ -77,14 +78,21 @@ app.get("/api/pokemons", jwtCheck, async (req: Request, res: Response) => {
 
       total = ownedIds.length;
 
-      pokemons = await Pokemon.find(ownedQuery, {
-        backSpriteUrl: 0,
-        facts: 0,
-      })
-        .sort({ id: 1 })
-        .skip(offset * limit)
-        .limit(limit)
-        .lean<IPokemon[]>();
+      const result = await Promise.all([
+        Pokemon.find(ownedQuery, {
+          backSpriteUrl: 0,
+          facts: 0,
+        })
+          .sort({ id: 1 })
+          .skip(offset * limit)
+          .limit(limit)
+          .lean<IPokemon[]>(),
+
+        Pokemon.countDocuments(ownedQuery),
+      ]);
+
+      pokemons = result[0];
+      total = result[1];
     } else {
       const skip = offset * limit;
 
