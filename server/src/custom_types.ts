@@ -29,11 +29,12 @@ export interface IUser {
   totalPokemons: number;
   uniquePokemons: number;
   visitedPlayModes: boolean;
-  visitedPokedex: boolean;
+  // visitedPokedex: boolean;
   // visitedPokeMart: boolean;
   visitedPokemonNursery: boolean;
-  visitedTrade: boolean;
-  visitedLeaderboards: boolean;
+  // visitedTrade: boolean;
+  // visitedLeaderboards: boolean;
+  lastDailyBonus?: Date;
 }
 
 export type UserDoc = HydratedDocument<IUser>;

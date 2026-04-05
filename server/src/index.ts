@@ -143,7 +143,9 @@ app.get("/api/pokemons", jwtCheck, async (req: Request, res: Response) => {
 });
 
 app.post("/api/new-user", jwtCheck, async (req: Request, res: Response) => {
-  const { username, email } = req.body as { username: string; email: string };
+  const claims = req.auth?.payload;
+  const email = claims?.['user_email'] as string;
+  const { username } = req.body as { username: string };
 
   const existing = await User.findOne({ username });
   if (existing) return res.status(400).json({ error: "Username taken" });
@@ -159,18 +161,20 @@ app.post("/api/new-user", jwtCheck, async (req: Request, res: Response) => {
     totalPokemons: 0,
     uniquePokemons: 0,
     visitedPlayModes: false,
-    visitedPokedex: false,
+    // visitedPokedex: false,
     // visitedPokeMart: false,
     visitedPokemonNursery: false,
-    visitedTrade: false,
-    visitedLeaderboards: false,
+    // visitedTrade: false,
+    // visitedLeaderboards: false,
+    lastDailyBonus: new Date().setHours(0, 0, 0, 0),
   });
 
   res.json({ user });
 });
 
 app.get("/api/user", jwtCheck, async (req: Request, res: Response) => {
-  const email = req.query.email as string;
+  const claims = req.auth?.payload;
+  const email = claims?.['user_email'] as string;
   const user = await User.findOne({ email });
   res.json({ user });
 });
@@ -285,11 +289,11 @@ app.post("/api/user/visited", jwtCheck, async (req: Request, res: Response) => {
     // whitelist allowed fields
     const allowedFields = [
       "visitedPlayModes",
-      "visitedPokedex",
+      // "visitedPokedex",
       // "visitedPokeMart",
       "visitedPokemonNursery",
-      "visitedTrade",
-      "visitedLeaderboards",
+      // "visitedTrade",
+      // "visitedLeaderboards",
     ];
 
     if (!allowedFields.includes(field)) {
