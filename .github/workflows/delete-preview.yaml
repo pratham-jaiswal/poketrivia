@@ -1,4 +1,4 @@
-name: Cleanup Preview App
+name: Server Cleanup Preview App
 
 on:
   pull_request:
