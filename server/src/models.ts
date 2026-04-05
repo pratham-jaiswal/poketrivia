@@ -25,7 +25,8 @@ const userSchema = new Schema<IUser>({
   visitedPokemonNursery: Boolean,
   // visitedTrade: Boolean,
   // visitedLeaderboards: Boolean,
-  lastDailyBonus: Date,
+  lastDailyBonus: { type: Date, default: new Date(0) },
+  loginStreak: { type: Number, default: 0 },
 });
 
 export const User = model<IUser>("User", userSchema);
