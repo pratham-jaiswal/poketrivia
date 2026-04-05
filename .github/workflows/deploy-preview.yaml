@@ -1,4 +1,4 @@
-name: PR Preview Deployment
+name: Server PR Preview Deployment
 
 on:
   pull_request:
