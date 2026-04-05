@@ -89,7 +89,7 @@ function App() {
           const fetchUserTask = async () => {
             const token = await getAccessTokenSilently();
             const response = await axios.get(
-              `${import.meta.env.VITE_APP_API_URL}/api/user?email=${user.email}`,
+              `${import.meta.env.VITE_APP_API_URL}/api/user`,
               { headers: { Authorization: `Bearer ${token}` } },
             );
             return response.data.user;
@@ -177,7 +177,6 @@ function App() {
                     isAuthenticated={isAuthenticated}
                     userData={userData}
                     setUserData={setUserData}
-                    userEmail={isAuthenticated ? user.email : null}
                     getAccessTokenSilently={getAccessTokenSilently}
                   />
                 }

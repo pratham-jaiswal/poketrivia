@@ -22,11 +22,12 @@ const userSchema = new Schema<IUser>({
   totalPokemons: Number,
   uniquePokemons: Number,
   visitedPlayModes: Boolean,
-  visitedPokedex: Boolean,
+  // visitedPokedex: Boolean,
   // visitedPokeMart: Boolean,
   visitedPokemonNursery: Boolean,
-  visitedTrade: Boolean,
-  visitedLeaderboards: Boolean,
+  // visitedTrade: Boolean,
+  // visitedLeaderboards: Boolean,
+  lastDailyBonus: Date,
 });
 
 export const User = model<IUser>("User", userSchema);

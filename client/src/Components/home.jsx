@@ -6,7 +6,6 @@ function Home({
   isAuthenticated,
   userData,
   setUserData,
-  userEmail,
   getAccessTokenSilently,
 }) {
   const navigate = useNavigate();
@@ -93,7 +92,6 @@ function Home({
         `${import.meta.env.VITE_APP_API_URL}/api/new-user`,
         {
           username,
-          email: userEmail,
         },
         {
           headers: {
