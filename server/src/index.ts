@@ -17,7 +17,6 @@ import {
   generateImageQuiz,
 } from "./game_utils.ts";
 import { calculateFinalPrice } from "./pricing_util.ts";
-import { setTimeout } from "timers/promises";
 
 dotenv.config();
 
@@ -109,10 +108,22 @@ app.get("/api/pokemons", jwtCheck, async (req: Request, res: Response) => {
       total = result[1];
     }
 
-    const enriched = pokemons.map((p) => ({
-      ...p,
-      isOwned: ownedIds.includes(p._id.toString()),
-    }));
+    const enriched = await Promise.all(
+      pokemons.map(async (p) => {
+        const isOwned = ownedIds.includes(p._id.toString());
+
+        if (!isOwned) {
+          return {
+            _id: p._id,
+            id: p.id,
+            silhouetteData: p.silhouetteData,
+            isOwned: false,
+          };
+        }
+
+        return { ...p, isOwned: true };
+      }),
+    );
 
     res.json({
       data: enriched,

@@ -10,7 +10,7 @@ export type Answer = {
 export type PokemonLean = {
   name: string;
   facts?: string[];
-  frontSpriteUrl?: string;
+  silhouetteData?: string;
 };
 
 export interface IUserPokemon {
@@ -44,6 +44,7 @@ export interface IPokemon {
   name: string;
   frontSpriteUrl: string;
   backSpriteUrl: string;
+  silhouetteData?: string;
   stats: {
     hp: number;
     atk: number;
