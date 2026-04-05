@@ -144,7 +144,11 @@ app.get("/api/pokemons", jwtCheck, async (req: Request, res: Response) => {
 
 app.post("/api/new-user", jwtCheck, async (req: Request, res: Response) => {
   const claims = req.auth?.payload;
-  const email = claims?.['user_email'] as string;
+  const email = claims?.["user_email"] as string;
+  if (!email) {
+    return res.status(401).json({ error: "Invalid token." });
+  }
+
   const { username } = req.body as { username: string };
 
   const existing = await User.findOne({ username });
@@ -155,8 +159,6 @@ app.post("/api/new-user", jwtCheck, async (req: Request, res: Response) => {
     email,
     pokemons: [],
     totalScore: 0,
-    weeklyScore: 0,
-    monthlyScore: 0,
     pokecoins: 0,
     totalPokemons: 0,
     uniquePokemons: 0,
@@ -174,7 +176,11 @@ app.post("/api/new-user", jwtCheck, async (req: Request, res: Response) => {
 
 app.get("/api/user", jwtCheck, async (req: Request, res: Response) => {
   const claims = req.auth?.payload;
-  const email = claims?.['user_email'] as string;
+  const email = claims?.["user_email"] as string;
+  if (!email) {
+    return res.status(401).json({ error: "Invalid token." });
+  }
+
   const user = await User.findOne({ email });
   res.json({ user });
 });
@@ -222,11 +228,23 @@ app.post("/api/game/start", jwtCheck, async (req: Request, res: Response) => {
 });
 
 app.post("/api/game/submit", jwtCheck, async (req: Request, res: Response) => {
-  const { sessionId, answers, userId } = req.body as {
+  const claims = req.auth?.payload;
+  const email = claims?.["user_email"] as string;
+
+  if (!email) {
+    return res.status(401).json({ error: "Invalid token." });
+  }
+
+  const { sessionId, answers } = req.body as {
     sessionId: string;
     answers: Answer[];
-    userId: string;
   };
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    return res.status(404).json({ error: "User account no longer exists." });
+  }
+  const userId = String(user._id);
 
   const session = await GameSession.findById(sessionId);
   if (!session) return res.status(404).json({ error: "Session not found" });
@@ -270,13 +288,13 @@ app.post("/api/game/submit", jwtCheck, async (req: Request, res: Response) => {
   session.isCompleted = true;
   await session.save();
 
-  const user = await User.findByIdAndUpdate(
+  const updatedUser = await User.findByIdAndUpdate(
     userId,
     { $inc: { totalScore: xp, pokecoins: coins } },
     { returnDocument: "after" },
   );
 
-  res.json({ score, rewards: { xp, coins }, user });
+  res.json({ score, rewards: { xp, coins }, user: updatedUser });
 });
 
 app.post("/api/user/visited", jwtCheck, async (req: Request, res: Response) => {

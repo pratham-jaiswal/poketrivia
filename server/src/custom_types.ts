@@ -23,8 +23,6 @@ export interface IUser {
   email: string;
   pokemons: IUserPokemon[];
   totalScore: number;
-  weeklyScore: number;
-  monthlyScore: number;
   pokecoins: number;
   totalPokemons: number;
   uniquePokemons: number;
@@ -40,7 +38,7 @@ export interface IUser {
 export type UserDoc = HydratedDocument<IUser>;
 
 export interface IPokemon {
-  _id: Types.ObjectId; 
+  _id: Types.ObjectId;
   id: number;
   name: string;
   frontSpriteUrl: string;
