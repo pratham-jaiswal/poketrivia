@@ -16,8 +16,6 @@ const userSchema = new Schema<IUser>({
     },
   ],
   totalScore: Number,
-  weeklyScore: Number,
-  monthlyScore: Number,
   pokecoins: Number,
   totalPokemons: Number,
   uniquePokemons: Number,
