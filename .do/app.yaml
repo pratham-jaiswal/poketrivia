@@ -1,6 +1,9 @@
 alerts:
 - rule: DEPLOYMENT_FAILED
 - rule: DOMAIN_FAILED
+domains:
+- domain: poketrivia-server.prathamjaiswal.com
+  type: PRIMARY
 features:
 - buildpack-stack=ubuntu-22
 ingress:
@@ -10,6 +13,9 @@ ingress:
     cors:
       allow_origins:
       - exact: https://poketrivia.prathamjaiswal.com
+      allow_headers:
+      - Content-Type
+      - Authorization
     match:
       authority:
         exact: ""
@@ -17,9 +23,6 @@ ingress:
         prefix: /
 name: backend-poketrivia
 region: blr
-domains:
-  - domain: poketrivia-server.prathamjaiswal.com
-    type: PRIMARY
 services:
 - environment_slug: node-js
   envs:
