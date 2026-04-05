@@ -45,7 +45,6 @@ if (mongoose.connection.readyState === 0) {
 
 app.get("/api/pokemons", jwtCheck, async (req: Request, res: Response) => {
   try {
-    await setTimeout(3000);
     const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
     const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
 
