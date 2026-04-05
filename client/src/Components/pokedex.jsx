@@ -17,7 +17,7 @@ function Pokedex({ userData, getAccessTokenSilently }) {
   const isFetching = useRef(false);
 
   const fetchPokemons = useCallback(
-    async (reset = false, targetOffset = 0) => {
+    async (reset = false, targetOffset = 0, signal = null) => {
       if (isFetching.current || (!reset && !hasNextRef.current)) return;
 
       try {
@@ -39,6 +39,7 @@ function Pokedex({ userData, getAccessTokenSilently }) {
           {
             params,
             headers: { Authorization: `Bearer ${token}` },
+            signal,
           },
         );
 
@@ -49,40 +50,69 @@ function Pokedex({ userData, getAccessTokenSilently }) {
         setHasNext(next);
         hasNextRef.current = next;
       } catch (err) {
+        if (axios.isCancel(err)) return;
         const errorDetail = err.response?.data?.error || "Pokedex signal lost!";
         showToast.error(errorDetail);
         setHasNext(false);
         hasNextRef.current = false;
       } finally {
-        setLoading(false);
-        isFetching.current = false;
+        if (!signal?.aborted) {
+          setLoading(false);
+          isFetching.current = false;
+        }
       }
     },
     [option, ownCategory, userData?._id, getAccessTokenSilently],
   );
 
   useEffect(() => {
-    setOffset(0);
-    setHasNext(true);
-    fetchPokemons(true, 0);
-  }, [option, ownCategory, userData?._id, fetchPokemons]);
+    const controller = new AbortController();
 
-  useEffect(() => {
-    if (offset > 0) {
-      fetchPokemons(false, offset);
+    if (offset === 0) {
+      setPokemons([]);
+      isFetching.current = false;
     }
-  }, [offset, fetchPokemons]);
+
+    fetchPokemons(offset === 0, offset, controller.signal);
+
+    return () => {
+      controller.abort();
+      isFetching.current = false;
+    };
+  }, [option, ownCategory, offset, userData?._id, fetchPokemons]);
+
+  const handleFilterChange = (newOption, newCategory = "all") => {
+    if (newOption === option && newCategory === ownCategory) return;
+
+    isFetching.current = false;
+
+    setPokemons([]);
+    setHasNext(true);
+    hasNextRef.current = true;
+
+    setOption(newOption);
+    setOwnCategory(newCategory);
+
+    setOffset(0);
+  };
 
   useEffect(() => {
-    if (loading || isFetching.current) return;
+    if (loading || !hasNext) return;
 
     if (observerRef.current) observerRef.current.disconnect();
 
-    observerRef.current = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting && hasNext && !isFetching.current) {
-        setOffset((prev) => prev + 1);
-      }
-    });
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        if (
+          entries[0].isIntersecting &&
+          hasNextRef.current &&
+          !isFetching.current
+        ) {
+          setOffset((prev) => prev + 1);
+        }
+      },
+      { threshold: 0.1 },
+    );
 
     const el = document.querySelector("#scroll-anchor");
     if (el) observerRef.current.observe(el);
@@ -97,17 +127,14 @@ function Pokedex({ userData, getAccessTokenSilently }) {
       <div className="button-container">
         <button
           className={`option-btn ${option === "all" ? "active" : ""}`}
-          onClick={() => setOption("all")}
+          onClick={() => handleFilterChange("all")}
         >
           All
         </button>
 
         <button
           className={`option-btn ${option === "owned" ? "active" : ""}`}
-          onClick={() => {
-            setOption("owned");
-            setOwnCategory("all");
-          }}
+          onClick={() => handleFilterChange("owned", "all")}
         >
           Owned
         </button>
@@ -117,25 +144,21 @@ function Pokedex({ userData, getAccessTokenSilently }) {
         <div className="button-container own-btn">
           <button
             className={`option-btn ${ownCategory === "all" ? "active" : ""}`}
-            onClick={() => setOwnCategory("all")}
+            onClick={() => handleFilterChange("owned", "all")}
           >
             All
           </button>
 
           <button
-            className={`option-btn ${
-              ownCategory === "legendary" ? "active" : ""
-            }`}
-            onClick={() => setOwnCategory("legendary")}
+            className={`option-btn ${ownCategory === "legendary" ? "active" : ""}`}
+            onClick={() => handleFilterChange("owned", "legendary")}
           >
             Legendary
           </button>
 
           <button
-            className={`option-btn ${
-              ownCategory === "mythical" ? "active" : ""
-            }`}
-            onClick={() => setOwnCategory("mythical")}
+            className={`option-btn ${ownCategory === "mythical" ? "active" : ""}`}
+            onClick={() => handleFilterChange("owned", "mythical")}
           >
             Mythical
           </button>
