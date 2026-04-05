@@ -150,6 +150,9 @@ img {
   flex-direction: column;
 
   .professors {
+    min-height: 400px;
+    align-items: flex-end;
+
     height: 90%;
     width: 90%;
     margin: 5vh 0;
@@ -157,6 +160,19 @@ img {
     gap: 30px;
     text-align: center;
     align-items: end;
+
+    img {
+      aspect-ratio: 2 / 3;
+      height: 100%;
+      width: auto;
+      object-fit: contain;
+
+      transition: opacity 0.3s ease;
+
+      &[src=""] {
+        opacity: 0;
+      }
+    }
 
     .oak {
       height: 100%;
@@ -565,7 +581,6 @@ img {
     .pokemon-img {
       width: 95%;
       height: 93%;
-      background: white url(./Images/pokeball.png) no-repeat center;
       background-size: contain;
       display: flex;
       justify-content: center;

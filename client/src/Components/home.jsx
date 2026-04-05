@@ -1,5 +1,3 @@
-import oak from "../Images/Characters/oak.png";
-import juniper from "../Images/Characters/juniper.png";
 import { useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
@@ -121,7 +119,7 @@ function Home({
           <img
             draggable="false"
             className="juniper"
-            src={juniper}
+            src={`${import.meta.env.VITE_APP_CLOUDINARY_BASE}/juniper_koiqjs.png`}
             alt="Professor Juniper"
           />
           {!isAuthenticated || (isAuthenticated && userData) ? (
@@ -222,7 +220,7 @@ function Home({
           <img
             draggable="false"
             className="oak"
-            src={oak}
+            src={`${import.meta.env.VITE_APP_CLOUDINARY_BASE}/oak_bswx8b.png`}
             alt="Professor Oak"
           />
         </div>

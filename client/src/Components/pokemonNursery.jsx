@@ -1,4 +1,3 @@
-import joy from "../Images/Characters/joy.png";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -158,7 +157,7 @@ function PokemonNursery({ userData, setUserData, getAccessTokenSilently }) {
   return (
     <div className="center-container">
       <div className="professors">
-        <img draggable="false" className="joy" src={joy} alt="Joy" />
+        <img draggable="false" className="joy" src={`${import.meta.env.VITE_APP_CLOUDINARY_BASE}/joy_nhousr.png`} alt="Joy" />
 
         {userData.visitedPokemonNursery ? (
           !hatching && hatchedPokemonList.length === 0 && !errorMessage ? (

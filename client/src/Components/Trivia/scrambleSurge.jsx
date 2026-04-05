@@ -1,4 +1,3 @@
-import brock from "../../Images/Characters/brock.png";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -120,7 +119,7 @@ function ScrambleSurge({ userData, setUserData, getAccessTokenSilently }) {
   return (
     <div className="center-container">
       <div className="professors wtp-container">
-        <img draggable="false" className="brock" src={brock} alt="Brock" />
+        <img draggable="false" className="brock" src={`${import.meta.env.VITE_APP_CLOUDINARY_BASE}/brock_ncikjz.png`} alt="Brock" />
 
         {loading && !quizComplete && pokemonScrambledNameList.length === 0 && (
           <div className="home-container">

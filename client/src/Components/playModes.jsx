@@ -1,4 +1,3 @@
-import delia from "../Images/Characters/delia.png";
 import { useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
@@ -85,7 +84,7 @@ function PlayModes({ userData, setUserData, getAccessTokenSilently }) {
   return (
     <div className="center-container">
       <div className="professors">
-        <img draggable="false" className="mom" src={delia} alt="Delia - Mom" />
+        <img draggable="false" className="mom" src={`${import.meta.env.VITE_APP_CLOUDINARY_BASE}/delia_fxwtbs.png`} alt="Delia - Mom" />
         {(userData && userData.visitedPlayModes) || !userData ? (
           <>
             <div className="home-container">

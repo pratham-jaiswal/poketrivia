@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import LoginButton from "../Auth/loginButton";
-import poketrivia from "../Images/poketrivia.png";
 import LogoutButton from "../Auth/logoutButton";
 
 function Navbar({ isAuthenticated, userData }) {
@@ -12,7 +11,7 @@ function Navbar({ isAuthenticated, userData }) {
             <img
               draggable="false"
               className="logo"
-              src={poketrivia}
+              src={`${import.meta.env.VITE_APP_CLOUDINARY_BASE}/poketrivia_cdgrdj.png`}
               alt="React Logo"
             />
           </Link>

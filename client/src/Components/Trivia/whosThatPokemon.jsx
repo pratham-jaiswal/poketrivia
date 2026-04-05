@@ -1,4 +1,3 @@
-import dawn from "../../Images/Characters/dawn.png";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -118,7 +117,7 @@ function WhosThatPokemon({ userData, setUserData, getAccessTokenSilently }) {
   return (
     <div className="center-container">
       <div className="professors wtp-container">
-        <img draggable="false" className="dawn" src={dawn} alt="Dawn" />
+        <img draggable="false" className="dawn" src={`${import.meta.env.VITE_APP_CLOUDINARY_BASE}/dawn_z5pxu6.png`} alt="Dawn" />
 
         {loading && !quizComplete && pokemonImageUrls.length === 0 && (
           <div className="home-container">

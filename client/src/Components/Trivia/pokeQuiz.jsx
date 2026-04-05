@@ -1,4 +1,3 @@
-import kukui from "../../Images/Characters/kukui.png";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -136,7 +135,7 @@ function PokeQuiz({ userData, setUserData, getAccessTokenSilently }) {
         <img
           draggable="false"
           className="kukui"
-          src={kukui}
+          src={`${import.meta.env.VITE_APP_CLOUDINARY_BASE}/kukui_xcehvy.png`}
           alt="Professor Kukui"
         />
 

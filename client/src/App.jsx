@@ -16,6 +16,33 @@ const WhosThatPokemon = lazy(
 );
 const ScrambleSurge = lazy(() => import("./Components/Trivia/scrambleSurge"));
 
+const preloadCloudinaryImages = async () => {
+  const images = [
+    "poketrivia_cdgrdj.png",
+    "juniper_koiqjs.png",
+    "oak_bswx8b.png",
+    "pokeball_is9hoa.png",
+    "delia_fxwtbs.png",
+    "joy_nhousr.png",
+    "kukui_xcehvy.png",
+    "brock_ncikjz.png",
+    "dawn_z5pxu6.png",
+  ];
+  const promises = images.map((item) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.src = `${import.meta.env.VITE_APP_CLOUDINARY_BASE}/${item}`;
+      img.crossOrigin = "anonymous";
+
+      img.onload = resolve;
+      img.onerror = resolve;
+    });
+  });
+
+  console.log(`📡 PokéCenter: Syncing ${images.length} Cloudinary assets...`);
+  return Promise.all(promises);
+};
+
 const NotFoundComponent = () => (
   <div style={{ textAlign: "center" }}>
     <h1>404 - Not Found</h1>
@@ -52,35 +79,43 @@ function App() {
   useEffect(() => {
     let isMounted = true;
 
-    const fetchUser = async () => {
+    const initializeApp = async () => {
       if (isLoading) return;
 
-      if (isAuthenticated && user?.email) {
-        try {
-          const token = await getAccessTokenSilently();
-          const response = await axios.get(
-            `${import.meta.env.VITE_APP_API_URL}/api/user?email=${user.email}`,
-            { headers: { Authorization: `Bearer ${token}` } },
-          );
+      try {
+        const tasks = [preloadCloudinaryImages()];
 
-          if (isMounted) {
-            setUserData(response.data.user);
-            setIsLoaded(true);
-          }
-        } catch {
-          if (isMounted) {
-            showToast.error(
-              "PokéCenter connection failed! Unable to retrieve Trainer data.",
+        if (isAuthenticated && user?.email) {
+          const fetchUserTask = async () => {
+            const token = await getAccessTokenSilently();
+            const response = await axios.get(
+              `${import.meta.env.VITE_APP_API_URL}/api/user?email=${user.email}`,
+              { headers: { Authorization: `Bearer ${token}` } },
             );
-            setIsLoaded(true);
-          }
+            return response.data.user;
+          };
+          tasks.push(fetchUserTask());
         }
-      } else {
-        if (isMounted) setIsLoaded(true);
+
+        const results = await Promise.all(tasks);
+
+        if (isMounted) {
+          if (results[1]) {
+            setUserData(results[1]);
+          }
+          setIsLoaded(true);
+        }
+      } catch (error) {
+        console.error("Initialization failed", error);
+        if (isMounted) {
+          showToast.error("PokéCenter connection failed! Trainer data lost.");
+          setIsLoaded(true);
+        }
       }
     };
 
-    fetchUser();
+    initializeApp();
+
     return () => {
       isMounted = false;
     };
