@@ -36,6 +36,7 @@ const pokemonSchema = new Schema<IPokemon>({
   name: String,
   frontSpriteUrl: String,
   backSpriteUrl: String,
+  silhouetteData: String,
   stats: {
     hp: Number,
     atk: Number,

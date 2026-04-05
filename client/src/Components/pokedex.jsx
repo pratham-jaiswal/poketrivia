@@ -171,7 +171,7 @@ function Pokedex({ userData, getAccessTokenSilently }) {
         ))}
       </div>
 
-      {/* 🔥 invisible trigger element */}
+      {/* invisible trigger element */}
       <div id="scroll-anchor" style={{ height: "20px" }} />
 
       {loading && (

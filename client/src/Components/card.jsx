@@ -23,14 +23,20 @@ function Card({ pokemon, isOwned }) {
   };
 
   return (
-    <div className={`card ${isOwned ? (pokemon.isMythical ? "mythical" : (pokemon.isLegendary ? "legendary" : "")) : "card-unknown"}`}>
+    <div
+      className={`card ${isOwned ? (pokemon.isMythical ? "mythical" : pokemon.isLegendary ? "legendary" : "") : "card-unknown"}`}
+    >
       <div className="id">#{pokemon.id}</div>
       <div className="container">
         <div className="pokemon-img">
-          {isOwned && (
-            <>
-              <img src={pokemon.frontSpriteUrl} alt={pokemon.name || "pokemon"} loading="lazy" />
-            </>
+          {isOwned ? (
+            <img
+              src={pokemon.frontSpriteUrl}
+              alt={pokemon.name || "pokemon"}
+              loading="lazy"
+            />
+          ) : (
+            <img src={pokemon.silhouetteData} alt="pokemon" loading="lazy" />
           )}
         </div>
       </div>

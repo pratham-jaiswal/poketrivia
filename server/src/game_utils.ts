@@ -74,30 +74,14 @@ export async function generateScrambleQuiz(
 export async function generateImageQuiz(count = 10): Promise<GameQuestion[]> {
   const pokemons = (await Pokemon.find(
     {},
-    { name: 1, frontSpriteUrl: 1 },
+    { name: 1, silhouetteData: 1 },
   ).lean()) as PokemonLean[];
 
   const questions: GameQuestion[] = [];
 
   while (questions.length < count) {
     const p = pokemons[Math.floor(Math.random() * pokemons.length)];
-    if (!p.frontSpriteUrl) continue;
-
-    const img = await axios.get<ArrayBuffer>(p.frontSpriteUrl, {
-      responseType: "arraybuffer",
-    });
-
-    const original = sharp(Buffer.from(img.data)).ensureAlpha();
-
-    const alpha = await original.clone().extractChannel("alpha").toBuffer();
-
-    const silhouette = await sharp(alpha)
-      .threshold(1)
-      .toColourspace("b-w")
-      .joinChannel(alpha) // 👈 key
-      .png()
-      .toBuffer();
-    const base64 = `data:image/png;base64,${silhouette.toString("base64")}`;
+    if (!p.silhouetteData) continue;
 
     const incorrect = getRandomElements(
       pokemons.filter((x) => x.name !== p.name),
@@ -106,7 +90,7 @@ export async function generateImageQuiz(count = 10): Promise<GameQuestion[]> {
 
     questions.push({
       questionId: new Types.ObjectId().toString(),
-      question: base64,
+      question: p.silhouetteData,
       options: shuffle([p.name, ...incorrect]),
       correctAnswer: p.name,
     });
