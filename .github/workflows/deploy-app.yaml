@@ -1,0 +1,28 @@
+name: Production Deployment
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  deploy-app:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Deploy the app
+        uses: digitalocean/app_action/deploy@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          AUTH0_AUDIENCE: ${{ secrets.AUTH0_AUDIENCE }}
+          AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
+          AUTH0_TOKEN_SIGN_ALGO: ${{ secrets.AUTH0_TOKEN_SIGN_ALGO }}
+          ALLOWED_URI: https://poketrivia.prathamjaiswal.com
+          NODE_ENV: 24.14.0
+          PORT: "8081"

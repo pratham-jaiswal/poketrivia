@@ -1,0 +1,64 @@
+name: PR Preview Deployment
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  test:
+    name: preview
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Deploy the app
+        id: deploy
+        uses: digitalocean/app_action/deploy@v2
+        with:
+          deploy_pr_preview: "true"
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          AUTH0_AUDIENCE: ${{ secrets.AUTH0_AUDIENCE }}
+          AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
+          AUTH0_TOKEN_SIGN_ALGO: ${{ secrets.AUTH0_TOKEN_SIGN_ALGO }}
+          ALLOWED_URI: https://poketrivia.prathamjaiswal.com
+          NODE_ENV: 24.14.0
+          PORT: "8081"
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const { BUILD_LOGS, DEPLOY_LOGS } = process.env
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🚀🚀🚀 The app was successfully deployed at ${{ fromJson(steps.deploy.outputs.app).live_url }}. [1]`
+            })
+      - uses: actions/github-script@v7
+        if: failure()
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `The app failed to be deployed. Logs can be found [here](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+              ## Logs
+              <details>
+              <summary>Build logs</summary> [2]
+              \`\\
+              ${BUILD_LOGS}
+              \`\\
+              </details>
+              <details>
+              <summary>Deploy logs</summary> [3]
+              \`\\
+              ${DEPLOY_LOGS}
+              \`\\
+              </details>`
+            })
