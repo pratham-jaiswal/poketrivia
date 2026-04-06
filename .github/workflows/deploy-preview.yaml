@@ -3,6 +3,10 @@ name: Server PR Preview Deployment
 on:
   pull_request:
     branches: [main]
+    paths:
+      - "server/**"
+      - "app.yaml"
+      - ".github/workflows/deploy-preview.yaml"
 
 permissions:
   contents: read

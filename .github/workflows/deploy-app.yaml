@@ -3,6 +3,10 @@ name: Server Production Deployment
 on:
   push:
     branches: [main]
+    paths:
+      - "server/**"
+      - "app.yaml"
+      - ".github/workflows/deploy-app.yaml"
 
 permissions:
   contents: read

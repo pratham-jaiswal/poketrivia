@@ -3,6 +3,9 @@ name: Server Cleanup Preview App
 on:
   pull_request:
     types: [closed]
+    paths:
+      - "server/**"
+      - "app.yaml"
 
 jobs:
   closed:
