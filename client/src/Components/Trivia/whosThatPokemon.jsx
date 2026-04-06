@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { showToast } from "../../Utils/toast";
 
 function WhosThatPokemon({ userData, setUserData, getAccessTokenSilently }) {
   const navigate = useNavigate();
@@ -81,6 +82,8 @@ function WhosThatPokemon({ userData, setUserData, getAccessTokenSilently }) {
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
+      const rewards = res.data.rewards;
+      showToast.reward(rewards);
       setScore(res.data.score);
       setUserData(res.data.user);
       setQuizComplete(true);
@@ -117,7 +120,12 @@ function WhosThatPokemon({ userData, setUserData, getAccessTokenSilently }) {
   return (
     <div className="center-container">
       <div className="professors wtp-container">
-        <img draggable="false" className="dawn" src={`${import.meta.env.VITE_APP_CLOUDINARY_BASE}/dawn_z5pxu6.png`} alt="Dawn" />
+        <img
+          draggable="false"
+          className="dawn"
+          src={`${import.meta.env.VITE_APP_CLOUDINARY_BASE}/dawn_z5pxu6.png`}
+          alt="Dawn"
+        />
 
         {loading && !quizComplete && pokemonImageUrls.length === 0 && (
           <div className="home-container">
@@ -212,7 +220,8 @@ function WhosThatPokemon({ userData, setUserData, getAccessTokenSilently }) {
                 <div className="home-container">
                   <div className="home-text-container">
                     <p>
-                      <span className="dawn">DAWN: </span>Score: {score}/10
+                      <span className="dawn">DAWN: </span>Score: {score}/
+                      {pokemonImageUrls.length}
                     </p>
                     <p>
                       <span className="dawn">DAWN: </span>

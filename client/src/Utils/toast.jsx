@@ -32,4 +32,14 @@ export const showToast = {
       ...toastConfig,
     });
   },
+  reward: (rewards) => {
+    const coinText =
+      rewards.dailyBonus > 0
+        ? `${rewards.coins} + ${rewards.dailyBonus} Bonus`
+        : `${rewards.coins}`;
+    const message = `+${rewards.xp} XP | +${coinText} Coins ${rewards.dailyBonus > 0 ? "🔥" : ""}`;
+    toast.info(message, {
+      ...toastConfig,
+    });
+  },
 };

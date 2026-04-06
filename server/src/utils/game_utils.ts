@@ -1,10 +1,25 @@
-import axios from "axios";
 import { Types } from "mongoose";
-import sharp from "sharp";
-import type { GameQuestion, PokemonLean } from "../custom_types.ts";
+import type { GameQuestion } from "../custom_types.ts";
 import { Pokemon } from "../models.ts";
 
 const shuffle = <T>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5);
+
+const scrambleString = (str: string): string => {
+  if (str.length <= 1) return str;
+
+  const arr = str.split("");
+  let scrambled = "";
+
+  do {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    scrambled = arr.join("");
+  } while (scrambled === str);
+
+  return scrambled;
+};
 
 export async function generateFactQuiz(count = 20): Promise<GameQuestion[]> {
   const selection = await Pokemon.aggregate([
@@ -47,7 +62,7 @@ export async function generateScrambleQuiz(
   ]);
 
   return selection.map((p, i) => {
-    const scrambled = shuffle(p.name.split("")).join("");
+    const scrambled = scrambleString(p.name);
     const incorrect = distractorPool.slice(i * 3, i * 3 + 3).map((d) => d.name);
 
     return {

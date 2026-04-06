@@ -33,7 +33,8 @@ export interface IUser {
   visitedPokemonNursery: boolean;
   // visitedTrade: boolean;
   // visitedLeaderboards: boolean;
-  lastDailyBonus?: Date;
+  lastDailyBonus: Date;
+  loginStreak: number;
 }
 
 export type UserDoc = HydratedDocument<IUser>;

@@ -256,27 +256,91 @@ app.post(
     let xp = 0;
     let coins = 0;
 
-    if (session.type === "fact") {
-      xp = score;
-      coins = score * 2;
-    } else if (session.type === "scramble") {
-      xp = score;
-      coins = score * 2;
-    } else if (session.type === "image") {
-      xp = score * 2;
-      coins = score * 4;
+    const baseRate = session.type === "image" ? 4 : 2;
+    const lengthMultiplier = session.questions.length >= 20 ? 1.2 : 1.0;
+
+    let accuracyBonus = 0;
+    const accuracy = score / session.questions.length;
+
+    if (accuracy === 1) {
+      accuracyBonus = 20;
+    } else if (accuracy >= 0.9) {
+      accuracyBonus = 10;
+    } else if (accuracy >= 0.8) {
+      accuracyBonus = 5;
     }
+
+    xp = Math.floor(
+      score * (session.type === "image" ? 2 : 1) * lengthMultiplier,
+    );
+    xp = Math.max(0, xp);
+
+    coins = Math.floor(score * baseRate * lengthMultiplier + accuracyBonus);
+    coins = Math.max(0, coins);
+
+    const now = new Date();
+    const today = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    ).getTime();
+    const lastBonusDate = new Date(user.lastDailyBonus);
+    const lastBonusDay = new Date(
+      lastBonusDate.getFullYear(),
+      lastBonusDate.getMonth(),
+      lastBonusDate.getDate(),
+    ).getTime();
+
+    let dailyBonus = 0;
+    if (today > lastBonusDay) {
+      const yesterday = today - 86400000;
+      user.loginStreak =
+        lastBonusDay === yesterday ? (user.loginStreak || 0) + 1 : 1;
+      dailyBonus = Math.min(50 + user.loginStreak * 5, 150);
+      user.lastDailyBonus = now;
+    }
+
+    const maxLimit = 2 ** 31 - 1; // Max Int
+
+    const currentCoins = user.pokecoins || 0;
+    const roomLeft = Math.max(0, maxLimit - currentCoins);
+    const actualCoinsAdded = Math.min(coins, roomLeft);
+
+    const roomAfterCoins = Math.max(0, roomLeft - actualCoinsAdded);
+    const actualBonusAdded = Math.min(dailyBonus, roomAfterCoins);
+
+    const coinsToAdd = actualCoinsAdded + actualBonusAdded;
+    const xpToAdd = Math.min(
+      xp,
+      Math.max(0, maxLimit - (user.totalScore || 0)),
+    );
+
     session.attemptedAt = new Date();
     session.isCompleted = true;
     await session.save();
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { $inc: { totalScore: xp, pokecoins: coins } },
+      {
+        $inc: { totalScore: xpToAdd, pokecoins: coinsToAdd },
+        $set: {
+          lastDailyBonus: user.lastDailyBonus,
+          loginStreak: user.loginStreak,
+        },
+      },
       { returnDocument: "after" },
     );
 
-    res.status(200).json({ score, rewards: { xp, coins }, user: updatedUser });
+    res.status(200).json({
+      score,
+      rewards: {
+        xp: xpToAdd,
+        coins: actualCoinsAdded,
+        dailyBonus: actualBonusAdded,
+      },
+      streak: user.loginStreak,
+      user: updatedUser,
+    });
   }),
 );
 
