@@ -28,9 +28,18 @@ function Card({ pokemon, isOwned }) {
     >
       <div className="id">#{pokemon.id}</div>
       <div className="container">
-        <div className="pokemon-img" style={{
-          background: `white url(${import.meta.env.VITE_APP_CLOUDINARY_BASE}/pokeball_is9hoa.png) no-repeat center;`
-        }}>
+        <div
+          className="pokemon-img"
+          style={{
+            background: `url(${import.meta.env.VITE_APP_CLOUDINARY_BASE}/pokeball_is9hoa.png)`,
+            backgroundColor: isOwned
+              ? "rgb(255, 243, 206)"
+              : "rgb(185, 185, 185)",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center",
+            backgroundSize: "contain",
+          }}
+        >
           {isOwned ? (
             <img
               src={pokemon.frontSpriteUrl}
