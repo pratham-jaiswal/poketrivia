@@ -1,4 +1,8 @@
-import express, { type Request, type Response } from "express";
+import express, {
+  type Request,
+  type Response,
+  type NextFunction,
+} from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -15,8 +19,12 @@ import {
   generateFactQuiz,
   generateScrambleQuiz,
   generateImageQuiz,
-} from "./game_utils.ts";
-import { calculateFinalPrice } from "./pricing_util.ts";
+} from "./utils/game_utils.ts";
+import { calculateFinalPrice } from "./utils/pricing_util.ts";
+import { AppError } from "./utils/AppError.ts";
+import { catchAsync } from "./utils/catchAsync.ts";
+import { globalErrorHandler } from "./middleware/errorHandler.ts";
+import { currentUser } from "./middleware/currentUser.ts";
 
 dotenv.config();
 
@@ -38,94 +46,71 @@ const jwtCheck = auth({
   tokenSigningAlg: process.env.AUTH0_TOKEN_SIGN_ALGO,
 });
 
+app.use(jwtCheck);
+app.use(currentUser);
+
 if (mongoose.connection.readyState === 0) {
-  mongoose.connect(`${process.env.MONGODB_URI}/pokemonDB`, { family: 4 });
+  mongoose
+    .connect(`${process.env.MONGODB_URI}/pokemonDB`, { family: 4 })
+    .then(() => {
+      console.log("DB connection successful!");
+      const PORT = process.env.PORT || 8081;
+      app.listen(PORT, () => {
+        console.log(`[SERVER] Running on port ${PORT}`);
+      });
+    })
+    .catch((err) => {
+      console.error("DB Connection Error: ", err);
+      process.exit(1);
+    });
 }
 
-app.get("/api/pokemons", jwtCheck, async (req: Request, res: Response) => {
-  try {
+app.get(
+  "/api/pokemons",
+  catchAsync(async (req: Request, res: Response) => {
+    const user = req.user!;
+
     const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
     const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
-
     const view = (req.query.view as string) || "all";
     const category = (req.query.category as string) || "all";
-    const userId = req.query.userId as string;
 
     let query: any = {};
-
     if (category === "legendary") query.isLegendary = true;
     if (category === "mythical") query.isMythical = true;
 
-    let ownedIds: string[] = [];
-
-    if (userId) {
-      const user = await User.findById(userId).lean();
-      if (user) {
-        ownedIds = user.pokemons.map((p) => p.pokemon.toString());
-      }
-    }
-
-    let pokemons: IPokemon[] = [];
-    let total = 0;
+    const ownedIds = user.pokemons.map((p) => p.pokemon.toString());
+    const ownedSet = new Set(ownedIds);
 
     if (view === "owned") {
-      const ownedQuery = {
-        ...query,
-        _id: { $in: ownedIds },
-      };
-
-      total = ownedIds.length;
-
-      const result = await Promise.all([
-        Pokemon.find(ownedQuery, {
-          backSpriteUrl: 0,
-          facts: 0,
-        })
-          .sort({ id: 1 })
-          .skip(offset * limit)
-          .limit(limit)
-          .lean<IPokemon[]>(),
-
-        Pokemon.countDocuments(ownedQuery),
-      ]);
-
-      pokemons = result[0];
-      total = result[1];
-    } else {
-      const skip = offset * limit;
-
-      const result = await Promise.all([
-        Pokemon.find(query, { backSpriteUrl: 0, facts: 0 })
-          .sort({ id: 1 })
-          .skip(skip)
-          .limit(limit)
-          .lean<IPokemon[]>(),
-
-        Pokemon.countDocuments(query),
-      ]);
-
-      pokemons = result[0];
-      total = result[1];
+      query._id = { $in: ownedIds };
     }
 
-    const enriched = await Promise.all(
-      pokemons.map(async (p) => {
-        const isOwned = ownedIds.includes(p._id.toString());
+    const [pokemons, total] = await Promise.all([
+      Pokemon.find(query, { backSpriteUrl: 0, facts: 0 })
+        .sort({ id: 1 })
+        .skip(offset * limit)
+        .limit(limit)
+        .lean<IPokemon[]>(),
+      Pokemon.countDocuments(query),
+    ]);
 
-        if (!isOwned) {
-          return {
-            _id: p._id,
-            id: p.id,
-            silhouetteData: p.silhouetteData,
-            isOwned: false,
-          };
-        }
+    const enriched = pokemons.map((p) => {
+      const isOwned = ownedSet.has(p._id.toString());
 
-        return { ...p, isOwned: true };
-      }),
-    );
+      if (!isOwned) {
+        return {
+          _id: p._id,
+          id: p.id,
+          silhouetteData: p.silhouetteData,
+          isOwned: false,
+        };
+      }
 
-    res.json({
+      return { ...p, isOwned: true };
+    });
+
+    res.status(200).json({
       data: enriched,
       pagination: {
         total,
@@ -136,232 +121,236 @@ app.get("/api/pokemons", jwtCheck, async (req: Request, res: Response) => {
         hasPrev: offset > 0,
       },
     });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+  }),
+);
 
-app.post("/api/new-user", jwtCheck, async (req: Request, res: Response) => {
-  const claims = req.auth?.payload;
-  const email = claims?.["user_email"] as string;
-  if (!email) {
-    return res.status(401).json({ error: "Invalid token." });
-  }
+app.post(
+  "/api/new-user",
+  catchAsync(async (req: Request, res: Response) => {
+    const claims = req.auth?.payload;
+    const email = claims?.["user_email"] as string;
+    if (!email)
+      throw new AppError("Authentication token missing user email.", 401);
 
-  const { username } = req.body as { username: string };
+    const { username } = req.body as { username: string };
 
-  const existing = await User.findOne({ username });
-  if (existing) return res.status(400).json({ error: "Username taken" });
+    const existing = await User.findOne({ username });
+    if (existing) throw new AppError("Username taken.", 400);
 
-  const user = await User.create({
-    username,
-    email,
-    pokemons: [],
-    totalScore: 0,
-    pokecoins: 0,
-    totalPokemons: 0,
-    uniquePokemons: 0,
-    visitedPlayModes: false,
-    // visitedPokedex: false,
-    // visitedPokeMart: false,
-    visitedPokemonNursery: false,
-    // visitedTrade: false,
-    // visitedLeaderboards: false,
-    lastDailyBonus: new Date().setHours(0, 0, 0, 0),
-  });
+    const user = await User.create({
+      username,
+      email,
+      pokemons: [],
+      totalScore: 0,
+      pokecoins: 0,
+      totalPokemons: 0,
+      uniquePokemons: 0,
+      visitedPlayModes: false,
+      // visitedPokedex: false,
+      // visitedPokeMart: false,
+      visitedPokemonNursery: false,
+      // visitedTrade: false,
+      // visitedLeaderboards: false,
+      lastDailyBonus: new Date().setHours(0, 0, 0, 0),
+    });
 
-  res.json({ user });
-});
+    res.status(200).json({ user });
+  }),
+);
 
-app.get("/api/user", jwtCheck, async (req: Request, res: Response) => {
-  const claims = req.auth?.payload;
-  const email = claims?.["user_email"] as string;
-  if (!email) {
-    return res.status(401).json({ error: "Invalid token." });
-  }
+app.get(
+  "/api/user",
 
-  const user = await User.findOne({ email });
-  res.json({ user });
-});
+  catchAsync(async (req: Request, res: Response) => {
+    const user = req.user!;
+    res.status(200).json({ user });
+  }),
+);
 
-app.post("/api/game/start", jwtCheck, async (req: Request, res: Response) => {
-  const { type, userId } = req.body as { type: GameType; userId: string };
+app.post(
+  "/api/game/start",
+  catchAsync(async (req: Request, res: Response) => {
+    const user = req.user!;
+    const userId = String(user._id);
 
-  const recent = await GameSession.findOne({
-    userId,
-    createdAt: { $gt: new Date(Date.now() - 5000) }, // 5s
-  });
+    const { type } = req.body as { type: GameType };
 
-  if (recent) return res.status(429).json({ error: "Too many requests" });
+    const recent = await GameSession.findOne({
+      userId,
+      createdAt: { $gt: new Date(Date.now() - 5000) }, // 5s
+    });
 
-  await GameSession.updateMany(
-    { userId, isCompleted: false },
-    { $set: { isCompleted: true } },
-  );
+    if (recent) throw new AppError("Too many requests", 429);
 
-  let generated: GameQuestion[];
+    await GameSession.updateMany(
+      { userId, isCompleted: false },
+      { $set: { isCompleted: true } },
+    );
 
-  if (type === "fact") generated = await generateFactQuiz();
-  else if (type === "scramble") generated = await generateScrambleQuiz();
-  else if (type === "image") generated = await generateImageQuiz();
-  else return res.status(400).json({ error: "Invalid type" });
+    let generated: GameQuestion[];
 
-  const session = await GameSession.create({
-    userId,
-    type,
-    questions: generated.map((q) => ({
-      questionId: q.questionId,
-      correctAnswer: q.correctAnswer,
-    })),
-    expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 60mins
-  });
+    if (type === "fact") generated = await generateFactQuiz();
+    else if (type === "scramble") generated = await generateScrambleQuiz();
+    else if (type === "image") generated = await generateImageQuiz();
+    else throw new AppError("Invalid game", 400);
 
-  res.json({
-    sessionId: session._id,
-    questions: generated.map((q) => ({
-      questionId: q.questionId,
-      question: q.question,
-      options: q.options,
-    })),
-  });
-});
+    const session = await GameSession.create({
+      userId,
+      type,
+      questions: generated.map((q) => ({
+        questionId: q.questionId,
+        correctAnswer: q.correctAnswer,
+      })),
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 60mins
+    });
 
-app.post("/api/game/submit", jwtCheck, async (req: Request, res: Response) => {
-  const claims = req.auth?.payload;
-  const email = claims?.["user_email"] as string;
+    res.status(200).json({
+      sessionId: session._id,
+      questions: generated.map((q) => ({
+        questionId: q.questionId,
+        question: q.question,
+        options: q.options,
+      })),
+    });
+  }),
+);
 
-  if (!email) {
-    return res.status(401).json({ error: "Invalid token." });
-  }
+app.post(
+  "/api/game/submit",
+  catchAsync(async (req: Request, res: Response) => {
+    const user = req.user!;
 
-  const { sessionId, answers } = req.body as {
-    sessionId: string;
-    answers: Answer[];
-  };
+    const { sessionId, answers } = req.body as {
+      sessionId: string;
+      answers: Answer[];
+    };
 
-  const user = await User.findOne({ email });
-  if (!user) {
-    return res.status(404).json({ error: "User not found." });
-  }
-  const userId = String(user._id);
+    const userId = String(user._id);
 
-  const session = await GameSession.findById(sessionId);
-  if (!session) return res.status(404).json({ error: "Session not found" });
-  if (session.expiresAt < new Date()) {
-    return res.status(400).json({ error: "Session expired" });
-  }
-  if (session.isCompleted)
-    return res.status(400).json({ error: "Already submitted" });
+    const session = await GameSession.findById(sessionId);
+    if (!session) throw new AppError("User account no longer exists.", 404);
+    if (session.expiresAt < new Date())
+      throw new AppError("Session expired.", 400);
+    if (session.isCompleted)
+      throw new AppError("This session has already been submitted.", 400);
 
-  if (session.userId.toString() !== userId)
-    return res.status(403).json({ error: "Unauthorized" });
+    if (session.userId.toString() !== userId)
+      throw new AppError(
+        "You do not have permission to submit this session.",
+        403,
+      );
 
-  if (!answers || answers.length !== session.questions.length)
-    return res.status(400).json({ error: "Invalid answers" });
+    if (!answers || answers.length !== session.questions.length)
+      throw new AppError("Invalid session", 403);
 
-  if (Date.now() - new Date(session.createdAt).getTime() < 3000)
-    // 3s
-    return res.status(400).json({ error: "Too fast" });
+    if (Date.now() - new Date(session.createdAt).getTime() < 3000)
+      throw new AppError("Too many requests", 429);
 
-  let score = 0;
-  const map = new Map(answers.map((a) => [a.questionId, a.selected]));
+    let score = 0;
+    const map = new Map(answers.map((a) => [a.questionId, a.selected]));
 
-  for (const q of session.questions) {
-    if (map.get(q.questionId) === q.correctAnswer) score++;
-  }
+    for (const q of session.questions) {
+      if (map.get(q.questionId) === q.correctAnswer) score++;
+    }
 
-  let xp = 0;
-  let coins = 0;
+    let xp = 0;
+    let coins = 0;
 
-  const baseRate = session.type === "image" ? 4 : 2;
-  const lengthMultiplier = session.questions.length >= 20 ? 1.2 : 1.0;
+    const baseRate = session.type === "image" ? 4 : 2;
+    const lengthMultiplier = session.questions.length >= 20 ? 1.2 : 1.0;
 
-  let accuracyBonus = 0;
-  const accuracy = score / session.questions.length;
+    let accuracyBonus = 0;
+    const accuracy = score / session.questions.length;
 
-  if (accuracy === 1) {
-    accuracyBonus = 20;
-  } else if (accuracy >= 0.9) {
-    accuracyBonus = 10;
-  } else if (accuracy >= 0.8) {
-    accuracyBonus = 5;
-  }
+    if (accuracy === 1) {
+      accuracyBonus = 20;
+    } else if (accuracy >= 0.9) {
+      accuracyBonus = 10;
+    } else if (accuracy >= 0.8) {
+      accuracyBonus = 5;
+    }
 
-  xp = Math.floor(
-    score * (session.type === "image" ? 2 : 1) * lengthMultiplier,
-  );
-  xp = Math.max(0, xp);
+    xp = Math.floor(
+      score * (session.type === "image" ? 2 : 1) * lengthMultiplier,
+    );
+    xp = Math.max(0, xp);
 
-  coins = Math.floor(score * baseRate * lengthMultiplier + accuracyBonus);
-  coins = Math.max(0, coins);
+    coins = Math.floor(score * baseRate * lengthMultiplier + accuracyBonus);
+    coins = Math.max(0, coins);
 
-  const now = new Date();
-  const today = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-  ).getTime();
-  const lastBonusDate = new Date(user.lastDailyBonus);
-  const lastBonusDay = new Date(
-    lastBonusDate.getFullYear(),
-    lastBonusDate.getMonth(),
-    lastBonusDate.getDate(),
-  ).getTime();
+    const now = new Date();
+    const today = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    ).getTime();
+    const lastBonusDate = new Date(user.lastDailyBonus);
+    const lastBonusDay = new Date(
+      lastBonusDate.getFullYear(),
+      lastBonusDate.getMonth(),
+      lastBonusDate.getDate(),
+    ).getTime();
 
-  let dailyBonus = 0;
-  if (today > lastBonusDay) {
-    const yesterday = today - 86400000;
-    user.loginStreak =
-      lastBonusDay === yesterday ? (user.loginStreak || 0) + 1 : 1;
-    dailyBonus = Math.min(50 + user.loginStreak * 5, 150);
-    user.lastDailyBonus = now;
-  }
+    let dailyBonus = 0;
+    if (today > lastBonusDay) {
+      const yesterday = today - 86400000;
+      user.loginStreak =
+        lastBonusDay === yesterday ? (user.loginStreak || 0) + 1 : 1;
+      dailyBonus = Math.min(50 + user.loginStreak * 5, 150);
+      user.lastDailyBonus = now;
+    }
 
-  const maxLimit = 2 ** 31 - 1; // Max Int
+    const maxLimit = 2 ** 31 - 1; // Max Int
 
-  const currentCoins = user.pokecoins || 0;
-  const roomLeft = Math.max(0, maxLimit - currentCoins);
-  const actualCoinsAdded = Math.min(coins, roomLeft);
+    const currentCoins = user.pokecoins || 0;
+    const roomLeft = Math.max(0, maxLimit - currentCoins);
+    const actualCoinsAdded = Math.min(coins, roomLeft);
 
-  const roomAfterCoins = Math.max(0, roomLeft - actualCoinsAdded);
-  const actualBonusAdded = Math.min(dailyBonus, roomAfterCoins);
+    const roomAfterCoins = Math.max(0, roomLeft - actualCoinsAdded);
+    const actualBonusAdded = Math.min(dailyBonus, roomAfterCoins);
 
-  const coinsToAdd = actualCoinsAdded + actualBonusAdded;
-  const xpToAdd = Math.min(xp, Math.max(0, maxLimit - (user.totalScore || 0)));
+    const coinsToAdd = actualCoinsAdded + actualBonusAdded;
+    const xpToAdd = Math.min(
+      xp,
+      Math.max(0, maxLimit - (user.totalScore || 0)),
+    );
 
-  session.attemptedAt = new Date();
-  session.isCompleted = true;
-  await session.save();
+    session.attemptedAt = new Date();
+    session.isCompleted = true;
+    await session.save();
 
-  const updatedUser = await User.findByIdAndUpdate(
-    userId,
-    {
-      $inc: { totalScore: xpToAdd, pokecoins: coinsToAdd },
-      $set: {
-        lastDailyBonus: user.lastDailyBonus,
-        loginStreak: user.loginStreak,
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        $inc: { totalScore: xpToAdd, pokecoins: coinsToAdd },
+        $set: {
+          lastDailyBonus: user.lastDailyBonus,
+          loginStreak: user.loginStreak,
+        },
       },
-    },
-    { returnDocument: "after" },
-  );
+      { returnDocument: "after" },
+    );
 
-  res.json({
-    score,
-    rewards: {
-      xp: xpToAdd,
-      coins: actualCoinsAdded,
-      dailyBonus: actualBonusAdded,
-    },
-    streak: user.loginStreak,
-    user: updatedUser,
-  });
-});
+    res.status(200).json({
+      score,
+      rewards: {
+        xp: xpToAdd,
+        coins: actualCoinsAdded,
+        dailyBonus: actualBonusAdded,
+      },
+      streak: user.loginStreak,
+      user: updatedUser,
+    });
+  }),
+);
 
-app.post("/api/user/visited", jwtCheck, async (req: Request, res: Response) => {
-  try {
-    const { userId, field } = req.body as {
-      userId: string;
+app.post(
+  "/api/user/visited",
+  catchAsync(async (req: Request, res: Response) => {
+    const user = req.user!;
+    const userId = String(user._id);
+
+    const { field } = req.body as {
       field: keyof IUser;
     };
 
@@ -375,29 +364,24 @@ app.post("/api/user/visited", jwtCheck, async (req: Request, res: Response) => {
       // "visitedLeaderboards",
     ];
 
-    if (!allowedFields.includes(field)) {
-      return res.status(400).json({ error: "Invalid field" });
-    }
+    if (!allowedFields.includes(field))
+      throw new AppError("Invalid field", 400);
 
-    const user = await User.findByIdAndUpdate(
+    const updatedUser = await User.findByIdAndUpdate(
       userId,
       { $set: { [field]: true } },
       { returnDocument: "after" },
     );
 
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
+    if (!updatedUser) throw new AppError("User account no longer exists.", 404);
 
-    res.json({ user });
-  } catch (error) {
-    console.error("Visited update error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+    res.status(200).json({ user });
+  }),
+);
 
-app.get("/api/pokemon-nursery/pricing", jwtCheck, async (req, res) => {
-  try {
+app.get(
+  "/api/pokemon-nursery/pricing",
+  catchAsync(async (req, res) => {
     const list = await EggPricing.find({ isActive: true }).lean();
 
     const data = list.map((item) => {
@@ -418,104 +402,96 @@ app.get("/api/pokemon-nursery/pricing", jwtCheck, async (req, res) => {
       };
     });
 
-    res.json({ data });
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch pricing" });
-  }
-});
+    res.status(200).json({ data });
+  }),
+);
 
 app.post(
   "/api/pokemon-nursery/hatch",
-  jwtCheck,
-  async (req: Request, res: Response) => {
-    try {
-      const { userId, mode, clientPrice } = req.body as {
-        userId: string;
-        mode: string;
-        clientPrice: number;
-      };
+  catchAsync(async (req: Request, res: Response) => {
+    const user = req.user!;
+    if (!user) throw new AppError("User account no longer exists.", 404);
+    const userId = String(user._id);
 
-      const pricing = await EggPricing.findOne({
-        mode,
-        isActive: true,
-      }).lean();
+    const { mode, clientPrice } = req.body as {
+      mode: string;
+      clientPrice: number;
+    };
 
-      if (!pricing) {
-        return res.status(400).json({ error: "Invalid mode" });
-      }
+    const eggsData = await EggPricing.findOne({
+      mode,
+      isActive: true,
+    }).lean();
+    if (!eggsData)
+      throw new AppError("Selected item is currently unavailable.", 400);
 
-      const { finalPrice } = calculateFinalPrice(pricing);
+    const { finalPrice } = calculateFinalPrice(eggsData);
 
-      if (clientPrice !== finalPrice) {
-        return res.status(409).json({
-          error: "PRICE_CHANGED",
-          newPrice: finalPrice,
-        });
-      }
-
-      const user = await User.findById(userId).lean();
-      if (!user) return res.status(404).json({ error: "User not found" });
-
-      let poolQuery: any = {};
-
-      if (pricing.category === "legendary") {
-        poolQuery.isLegendary = true;
-      } else if (pricing.category === "mythical") {
-        poolQuery.isMythical = true;
-      } else {
-        poolQuery.isLegendary = false;
-        poolQuery.isMythical = false;
-      }
-
-      const pool = await Pokemon.find(poolQuery).lean();
-
-      const ownedIds = user.pokemons.map((p) => p.pokemon.toString());
-
-      const notOwned = pool.filter((p) => !ownedIds.includes(p._id.toString()));
-
-      if (!notOwned.length) {
-        return res.status(400).json({ error: "No Pokémon left to hatch" });
-      }
-
-      const shuffled = notOwned.sort(() => Math.random() - 0.5);
-      const selected = shuffled.slice(0, pricing.quantity);
-
-      const updates = selected.map((p) => ({
-        pokemon: p._id,
-        count: 1,
-      }));
-
-      const updatedUser = await User.findOneAndUpdate(
-        {
-          _id: userId,
-          pokecoins: { $gte: finalPrice },
-        },
-        {
-          $inc: { pokecoins: -finalPrice },
-          $push: { pokemons: { $each: updates } },
-        },
-        { returnDocument: "after" },
+    if (clientPrice !== finalPrice) {
+      const error: any = new AppError(
+        "Price has updated. Please review before hatching.",
+        409,
+        { newPrice: finalPrice, code: "PRICE_MISMATCH" },
       );
-
-      if (!updatedUser) {
-        return res.status(400).json({ error: "Not enough coins" });
-      }
-
-      res.json({
-        hatched: selected.map((p) => ({
-          _id: p._id,
-          name: p.name,
-        })),
-        user: updatedUser,
-      });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: "Hatch failed" });
+      throw error;
     }
-  },
+
+    const poolQuery: any = {
+      isLegendary: eggsData.category === "legendary",
+      isMythical: eggsData.category === "mythical",
+    };
+
+    const ownedIds = user.pokemons.map((p) => p.pokemon);
+
+    const selected = await Pokemon.aggregate([
+      {
+        $match: {
+          ...poolQuery,
+          _id: { $nin: ownedIds },
+        },
+      },
+      { $sample: { size: eggsData.quantity } },
+      { $project: { _id: 1, name: 1 } },
+    ]);
+
+    if (selected.length < eggsData.quantity) {
+      const message =
+        selected.length === 0
+          ? "No new Pokémon left to hatch in this category!"
+          : `Not enough new Pokémon left (Need ${eggsData.quantity}, but only ${selected.length} available).`;
+
+      throw new AppError(message, 400);
+    }
+
+    const updates = selected.map((p) => ({
+      pokemon: p._id,
+      count: 1,
+    }));
+
+    const updatedUser = await User.findOneAndUpdate(
+      {
+        _id: user._id,
+        pokecoins: { $gte: finalPrice },
+      },
+      {
+        $inc: { pokecoins: -finalPrice },
+        $push: { pokemons: { $each: updates } },
+      },
+      { returnDocument: "after" },
+    );
+
+    if (!updatedUser)
+      throw new AppError("Insufficient Pokecoins for this hatch.", 402);
+
+    res.status(200).json({
+      hatched: selected,
+      user: updatedUser,
+    });
+  }),
 );
 
-const PORT = process.env.PORT || 8081;
-app.listen(PORT, () => {
-  console.log("Server Started");
+app.use((req: Request, res: Response, next: NextFunction) => {
+  next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
+
+app.use(globalErrorHandler);
