@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { showToast } from "../../Utils/toast";
 
 function WhosThatPokemon({ userData, setUserData, getAccessTokenSilently }) {

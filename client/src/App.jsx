@@ -2,7 +2,7 @@ import { useEffect, useState, Suspense, lazy } from "react";
 import Home from "./Components/home";
 import Navbar from "./Components/navbar";
 import { useAuth0 } from "@auth0/auth0-react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes } from "react-router";
 import { ToastContainer } from "react-toastify";
 import axios from "axios";
 import { showToast } from "./Utils/toast";

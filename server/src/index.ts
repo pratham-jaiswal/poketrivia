@@ -381,7 +381,7 @@ app.post(
 
 app.get(
   "/api/pokemon-nursery/pricing",
-  catchAsync(async (req, res) => {
+  catchAsync(async (req: any, res: any) => {
     const list = await EggPricing.find({ isActive: true }).lean();
 
     const data = list.map((item) => {

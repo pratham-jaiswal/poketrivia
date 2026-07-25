@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import LoginButton from "../Auth/loginButton";
 import LogoutButton from "../Auth/logoutButton";
 
