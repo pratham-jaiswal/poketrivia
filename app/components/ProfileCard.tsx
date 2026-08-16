@@ -70,12 +70,17 @@ export default function ProfileCard() {
 
   if (error || !profile) {
     return (
-      <div className={styles.emptyState}>
-        <p>{error ?? "You are not logged in."}</p>
-        <Link href="/auth/login" className="button primary">
-          Login
-        </Link>
-      </div>
+      <main className={`page-shell ${styles.profilePage}`}>
+        <section className={styles.loginPanel}>
+          <p className={styles.kicker}>Profile</p>
+          <p className={styles.description}>
+            You are not logged in.
+          </p>
+          <Link href="/auth/login" className={styles.primaryButton}>
+            Login
+          </Link>
+        </section>
+      </main>
     );
   }
 
