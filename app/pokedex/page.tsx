@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { validateAuth } from "@/lib/authMiddleware";
 import PokedexShell from "./PokedexShell";
+import styles from "./pokedex.module.scss";
 
 export const metadata: Metadata = {
   title: "Pokédex",
@@ -21,14 +22,16 @@ export default async function PokedexPage() {
 
   if (!user) {
     return (
-      <main className="page-shell">
-        <h1>Pokedex</h1>
-        <p>You must be logged in to view the Pokedex.</p>
-        <div style={{ marginTop: "1rem" }}>
-          <Link href="/auth/login" className="button primary">
+      <main className={`page-shell ${styles.pokedexPage}`}>
+        <section className={styles.loginPanel}>
+          <p className={styles.kicker}>Pokedex</p>
+          <p className={styles.description}>
+            You must be logged in to view the Pokedex.
+          </p>
+          <Link href="/auth/login" className={styles.primaryButton}>
             Login
           </Link>
-        </div>
+        </section>
       </main>
     );
   }

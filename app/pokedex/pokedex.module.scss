@@ -199,6 +199,63 @@
   opacity: 0.95;
 }
 
+.pokedexPage {
+  display: grid;
+  gap: 1.75rem;
+}
+
+.loginPanel {
+  max-width: 50rem;
+  padding: 2rem;
+  border-radius: 1.7rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.14);
+  display: grid;
+  gap: 1rem;
+}
+
+.loginPanel .description {
+  margin: 0;
+}
+
+.kicker {
+  margin: 0 0 0.9rem;
+  color: #a1a7ff;
+  text-transform: uppercase;
+  letter-spacing: 0.24em;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.primaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  padding: 0 1.25rem;
+  border-radius: 999px;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease,
+    background 0.2s ease;
+  background: linear-gradient(135deg, #ffcc01 0%, #ff8c00 100%);
+  color: #07101d;
+}
+
+.primaryButton:hover {
+  transform: translateY(-1px);
+}
+
+.primaryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+
 @media (max-width: 1000px) {
   .grid {
     grid-template-columns: repeat(3, 1fr);
