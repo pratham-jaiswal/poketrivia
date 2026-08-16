@@ -1,0 +1,238 @@
+.container {
+  padding: 1rem 0 3rem;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: nowrap;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.title {
+  margin: 0;
+  font-size: 1.75rem;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.titleLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.titleIcon {
+  color: var(--primary);
+}
+
+.actionsRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+.filterToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease,
+    transform 120ms ease;
+}
+
+.filterToggle:hover {
+  background: rgba(255, 255, 255, 0.16);
+  transform: translateY(-1px);
+}
+
+.filterPanel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.5rem);
+  width: min(300px, 100vw - 1.5rem);
+  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 1rem;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
+  padding: 1rem;
+  display: grid;
+  gap: 0.75rem;
+  z-index: 20;
+}
+
+.filterLabel {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  gap: 0.35rem;
+}
+
+.filterSelect {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--text);
+  font-weight: 600;
+  padding: 0.75rem 0.95rem;
+  border-radius: 0.85rem;
+  outline: none;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.filterSelect option {
+  color: rgba(17, 24, 39, 0.95);
+  background: #ffffff;
+}
+
+.filterSelect:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.filterSelect:focus {
+  border-color: rgba(59, 130, 246, 0.8);
+  box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.12);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cardId {
+  align-self: flex-start;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.imgWrap {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 0;
+}
+
+.imgWrap img {
+  max-width: 80%;
+  height: auto;
+  display: block;
+}
+
+.cardBody {
+  width: 100%;
+  text-align: center;
+}
+
+.name {
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.meta {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.type {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.55rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
+.typeUnknown {
+  color: var(--muted);
+}
+
+.loading {
+  text-align: center;
+  margin: 1rem 0;
+}
+
+.owned {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.unknown {
+  opacity: 0.95;
+}
+
+@media (max-width: 1000px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 720px) {
+  .filterControls {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .filterLabel {
+    min-width: 120px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .filterControls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filterLabel {
+    min-width: auto;
+  }
+}
+
+@media (max-width: 420px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

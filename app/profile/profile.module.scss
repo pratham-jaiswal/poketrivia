@@ -1,0 +1,23 @@
+.profilePage {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.header {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(2rem, 2.7vw, 2.4rem);
+  line-height: 1.05;
+}
+
+.description {
+  margin: 0;
+  max-width: 42rem;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.75;
+}

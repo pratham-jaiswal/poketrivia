@@ -1,0 +1,52 @@
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 16px;
+}
+
+.card {
+  padding: 1rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.imageContainer {
+  margin-bottom: 0.75rem;
+  min-height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.options {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.option {
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.01);
+}
+
+@media (max-width: 640px) {
+  .card {
+    padding: 0.75rem;
+  }
+
+  .imageContainer {
+    min-height: 160px;
+  }
+}

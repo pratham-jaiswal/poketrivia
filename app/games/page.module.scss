@@ -1,0 +1,147 @@
+.playModesPage {
+  display: grid;
+  gap: 2.5rem;
+  padding: 2rem 1.5rem 4rem;
+}
+
+.hero {
+  display: grid;
+  gap: 1.5rem;
+  max-width: 52rem;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(2.75rem, 5vw, 4.25rem);
+}
+
+.hero p {
+  margin: 0;
+  max-width: 38rem;
+  color: #d7e2ff;
+  line-height: 1.8;
+  font-size: 1rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+.card {
+  display: grid;
+  gap: 1rem;
+  padding: 1.75rem;
+  border-radius: 1.75rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.12);
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    background 0.25s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #e9ebff;
+  font-size: 0.78rem;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  width: fit-content;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.7rem;
+}
+
+.description {
+  margin: 0;
+  color: #c8d4ff;
+  line-height: 1.75;
+}
+
+.cta {
+  margin-top: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  width: fit-content;
+  padding: 0 1.4rem;
+  border-radius: 999px;
+  color: #07101d;
+  background: linear-gradient(135deg, #ffcc01 0%, #ff8c00 100%);
+  font-weight: 700;
+  transition: transform 0.2s ease;
+}
+
+.cta:hover {
+  transform: translateY(-1px);
+}
+
+.cardHeading {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.cardHeading h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.cardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.cardFooter span {
+  color: #a5b0ff;
+  font-size: 0.92rem;
+}
+
+.notice {
+  padding: 1.25rem 1.5rem;
+  border-radius: 1.5rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #c7d2ff;
+}
+
+@media (max-width: 980px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 660px) {
+  .playModesPage {
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    padding: 1.5rem;
+  }
+}

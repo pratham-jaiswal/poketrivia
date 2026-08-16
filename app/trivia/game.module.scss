@@ -1,0 +1,246 @@
+.gamePage {
+  display: grid;
+  gap: 2.5rem;
+  padding: 2rem 1.5rem 4rem;
+}
+
+.header {
+  display: grid;
+  gap: 1rem;
+}
+
+.modeLabel {
+  display: inline-flex;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #d8dcff;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  width: fit-content;
+}
+
+.description {
+  margin: 0;
+  color: #c8d4ff;
+  max-width: 50rem;
+  line-height: 1.75;
+}
+
+.metaPanel {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.metaLabel {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: #aab2ff;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+}
+
+.startPanel,
+.loadingPanel,
+.resultPanel,
+.errorPanel {
+  padding: 1.75rem;
+  border-radius: 1.75rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.startPrompt {
+  margin: 0 0 1rem;
+  color: #d6dcff;
+  line-height: 1.8;
+}
+
+.primaryButton,
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  margin-top: 1rem;
+  padding: 0 1.4rem;
+  border-radius: 999px;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease;
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled,
+.answerButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
+}
+
+.primaryButton:disabled:hover,
+.secondaryButton:disabled:hover,
+.answerButton:disabled:hover {
+  transform: none;
+}
+
+.primaryButton {
+  background: linear-gradient(135deg, #ffcc01 0%, #ff8c00 100%);
+  color: #07101d;
+}
+
+.secondaryButton {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f7f7ff;
+}
+
+.loadingPanel p,
+.errorPanel p,
+.resultPanel p {
+  margin: 0;
+}
+
+.questionPanel {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.progressBar {
+  width: 100%;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(135deg, #75c4ff 0%, #4b9cff 100%);
+}
+
+.questionMeta {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: #c5d5ff;
+}
+
+.questionCard {
+  display: grid;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  border-radius: 1.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.questionText {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: #f7f8ff;
+}
+
+.image {
+  width: 100%;
+  max-width: 320px;
+  border-radius: 1rem;
+  display: block;
+}
+
+.answerGrid {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.answerButton {
+  width: 100%;
+  text-align: left;
+  padding: 0.95rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: #eef1ff;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.answerButton:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.answerButton:disabled:hover {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.selected {
+  background: rgba(255, 204, 1, 0.18);
+  border-color: rgba(255, 204, 1, 0.35);
+}
+
+.feedback {
+  margin: 0;
+  color: #ffd5a8;
+}
+
+.controlRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+}
+
+.resultGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.resultGrid div {
+  padding: 1rem;
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.resultGrid span {
+  display: block;
+  color: #aeb7ff;
+  margin-bottom: 0.35rem;
+}
+
+.resultGrid strong {
+  display: block;
+  font-size: 1.35rem;
+}
+
+@media (max-width: 840px) {
+
+  .metaPanel,
+  .resultGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .gamePage {
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  .questionCard {
+    padding: 1.25rem;
+  }
+
+  .answerButton {
+    font-size: 0.95rem;
+  }
+}
