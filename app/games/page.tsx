@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import styles from "./page.module.scss";
+import { validateAuth } from "@/lib/authMiddleware";
 
 export const metadata: Metadata = {
   title: "Games",
@@ -35,7 +36,16 @@ const modes = [
   },
 ];
 
-export default function PlayModesPage() {
+export default async function PlayModesPage() {
+  let user = null;
+
+  try {
+    const auth = await validateAuth();
+    user = auth.user;
+  } catch (err) {
+    user = null;
+  }
+
   return (
     <main className={styles.playModesPage}>
       <section className={styles.hero}>
@@ -56,9 +66,15 @@ export default function PlayModesPage() {
               <p className={styles.description}>{mode.description}</p>
             </div>
             <div className={styles.cardFooter}>
-              <Link className={styles.cta} href={mode.href}>
-                Play now
-              </Link>
+              {
+                user ?
+                  <Link className={styles.cta} href={mode.href}>
+                    Play now
+                  </Link> :
+                  <Link href="/auth/login" className={styles.cta}>
+                    Login to play
+                  </Link>
+              }
             </div>
           </article>
         ))}

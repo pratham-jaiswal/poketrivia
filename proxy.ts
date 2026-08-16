@@ -15,7 +15,7 @@ export async function proxy(req: NextRequest) {
   }
 
   // Protect only the /pokedex route (and its subpaths)
-  if (pathname.startsWith("/pokedex")) {
+  if (pathname.startsWith("/trivia") || pathname.startsWith("/profile")) {
     // Prefer resolving a server session directly when possible. Some login flows
     // (e.g. auth performed by the server) will have a valid session even when
     // specific cookie names aren't present on the request. Try `auth0.getSession`
@@ -61,5 +61,5 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/auth/:path*", "/pokedex/:path*"],
+  matcher: ["/auth/:path*", "/trivia/:path*", "/profile/:path*"],
 };
